@@ -14,96 +14,130 @@ type BriefContext = {
   items: NormalizedContentItem[];
 };
 
+export const REQUIRED_VISUAL_PANEL_KINDS: VisualPanelKind[] = [
+  "cover",
+  "context",
+  "news",
+  "news",
+  "news",
+  "news",
+  "news",
+  "news",
+  "takeaway",
+  "footer"
+];
+
 export { panelBlobPath };
 
 export function normalizeVisualBrief(raw: string, context: BriefContext): VisualBriefDraft {
   try {
     const parsed = JSON.parse(stripJsonFence(raw)) as Partial<VisualBriefDraft>;
-    const panels = Array.isArray(parsed.panels) ? parsed.panels.map(normalizePanel).filter(Boolean) : [];
-    if (!parsed.title || panels.length < 4) {
+    const panels = Array.isArray(parsed.panels)
+      ? parsed.panels.map(normalizePanel).filter((panel): panel is VisualBriefPanelDraft => panel !== null)
+      : [];
+    if (!parsed.title || !hasRequiredPanelOrder(panels)) {
       return buildFallbackVisualBrief(context);
     }
 
-    return ensureBriefShape({
+    return {
       date: context.date,
       title: String(parsed.title),
       subtitle: String(parsed.subtitle ?? "企业 AI 落地决策简报"),
       sourceWindow: context.sourceWindow,
       panels: panels as VisualBriefPanelDraft[]
-    }, context);
+    };
   } catch {
     return buildFallbackVisualBrief(context);
   }
 }
 
 export function buildFallbackVisualBrief(context: BriefContext): VisualBriefDraft {
-  const newsItems = context.items.slice(0, 4);
-  const title = "企业 AI 落地信号图";
-  const panels: VisualBriefPanelDraft[] = [
-    {
-      kind: "cover",
-      kicker: "ENTERPRISE AI",
-      title,
-      body: [
-        `从 ${context.sourceWindow === "24h" ? "过去 24 小时" : "最近 7 天"}的多来源信号里，抓出最值得企业 AI 落地人注意的变化。`,
-        "这不是新闻列表，而是一张给内部流程建设者看的信号地图。"
-      ],
-      imagePrompt: "retrofuturistic vector illustration, AI news radar, beige teal amber palette, clean editorial infographic",
-      sourceUrls: newsItems.map((item) => item.url)
-    },
-    {
-      kind: "context",
-      kicker: "今日脉络",
-      title: "Agent 正在从工具走向系统",
-      body: [
-        "今天的重点不是某一个模型参数，而是如何让 Agent 在真实工作里稳定运行。",
-        "对企业来说，真正的机会在于补齐上下文、规则、权限、验证和复盘闭环。"
-      ],
-      imagePrompt: "retrofuturistic vector illustration, workflow map, signal lines, beige teal amber, no readable text",
-      sourceUrls: newsItems.map((item) => item.url)
-    },
-    ...newsItems.map((item, index): VisualBriefPanelDraft => ({
-      kind: "news",
-      kicker: `落地雷达 ${String(index + 1).padStart(2, "0")}`,
-      title: item.title,
-      body: [
-        item.summary || "这条信号值得放进今天的企业 AI 趋势观察里。",
-        "落地提醒：不要只看发布本身，要看它会不会改变团队的流程、权限、成本或验证方式。"
-      ],
-      imagePrompt: `retrofuturistic vector illustration for AI news: ${item.title}, beige teal amber palette, editorial long-image style, no readable text`,
-      sourceUrls: [item.url]
-    })),
-    {
-      kind: "takeaway",
-      kicker: "给企业 AI 落地人的判断",
-      title: "先做 Harness，再追热点",
-      body: [
-        "热点每天都会变，但企业真正需要的是可重复运行、可验证、可复盘的 Agent 系统。",
-        "如果一条新闻不能转化成场景、动作和风险检查，它就只是信息噪音。"
-      ],
-      imagePrompt: "retrofuturistic vector illustration, enterprise AI control panel, human-in-the-loop workflow, beige teal amber",
-      sourceUrls: newsItems.map((item) => item.url)
-    },
-    {
-      kind: "footer",
-      kicker: "明天继续",
-      title: "把新闻变成组织记忆",
-      body: [
-        "今日简报由五路公开信号源自动生成。",
-        "适合发布前人工快速校对事实、链接和措辞。"
-      ],
-      imagePrompt: "retrofuturistic vector illustration, archive of AI signals, clean ending page, beige teal amber",
-      sourceUrls: []
-    }
-  ];
+  const main = itemAt(context.items, 0);
+  const radar = [itemAt(context.items, 1), itemAt(context.items, 2), itemAt(context.items, 3)];
+  const allUrls = context.items.map((item) => item.url).filter(Boolean).slice(0, 8);
+  const windowLabel = context.sourceWindow === "24h" ? "过去 24 小时" : "最近 7 天";
 
-  return ensureBriefShape({
+  return {
     date: context.date,
-    title,
-    subtitle: "企业 Agent 生产力决策简报",
+    title: "企业 AI 落地信号图",
+    subtitle: "把公开信号变成可执行判断",
     sourceWindow: context.sourceWindow,
-    panels
-  }, context);
+    panels: [
+      {
+        kind: "cover",
+        kicker: "ENTERPRISE AI",
+        title: "企业 AI 落地信号图",
+        body: [`从${windowLabel}的公开信号里，抓出真正影响企业效率与流程的变化。`],
+        imagePrompt: "retrofuturistic vector illustration, enterprise AI signal radar, Beige Teal Amber, no readable text",
+        sourceUrls: allUrls
+      },
+      {
+        kind: "context",
+        kicker: "今日脉络",
+        title: "从工具热度走向稳定交付",
+        body: [
+          "企业真正需要的，不只是更强的模型。",
+          "更重要的是让 Agent 在真实工作里可控、可验证、可复盘。"
+        ],
+        imagePrompt: "retrofuturistic vector illustration, enterprise AI workflow map, Beige Teal Amber, no readable text",
+        sourceUrls: [main.url]
+      },
+      {
+        kind: "news",
+        kicker: "主线 01",
+        title: main.title,
+        body: [main.summary || "这条信号值得进入今天的企业 AI 趋势观察。", "它的价值在于能否改变真实工作方式。"],
+        imagePrompt: promptForNews(main.title, "signal focus"),
+        sourceUrls: [main.url]
+      },
+      {
+        kind: "news",
+        kicker: "主线 02",
+        title: "它会怎样影响企业工作流",
+        body: ["不要只看产品发布本身。", "继续追问它会怎样改变流程、权限、成本与验证方式。"],
+        imagePrompt: promptForNews(main.title, "workflow transformation"),
+        sourceUrls: [main.url]
+      },
+      {
+        kind: "news",
+        kicker: "主线 03",
+        title: "现在可以做一个小范围验证",
+        body: ["选一个高频、规则清楚的流程。", "先补齐上下文、权限和验收标准，再判断是否值得扩大。"],
+        imagePrompt: promptForNews(main.title, "controlled enterprise pilot"),
+        sourceUrls: [main.url]
+      },
+      ...radar.map((item, index): VisualBriefPanelDraft => ({
+        kind: "news",
+        kicker: `雷达 ${String(index + 1).padStart(2, "0")}`,
+        title: item.title,
+        body: [
+          item.summary || "这条信号值得加入今天的观察清单。",
+          "判断重点：它是否会改变团队的流程、权限、成本或验证方式。"
+        ],
+        imagePrompt: promptForNews(item.title, "enterprise AI radar"),
+        sourceUrls: item.url ? [item.url] : []
+      })),
+      {
+        kind: "takeaway",
+        kicker: "给企业 AI 落地人的判断",
+        title: "先做 Harness，再追热点",
+        body: [
+          "热点每天都在变。真正稀缺的是可重复运行、可验证、可复盘的 Agent 系统。",
+          "把新闻沉淀成场景、动作和风险检查，才会形成组织能力。"
+        ],
+        imagePrompt: "retrofuturistic vector illustration, enterprise AI control panel and human review, Beige Teal Amber, no readable text",
+        sourceUrls: allUrls
+      },
+      {
+        kind: "footer",
+        kicker: "明天继续",
+        title: "把新闻变成组织记忆",
+        body: ["本期由五路公开信号源自动生成。", "发布前请人工快速校对事实、链接和措辞。"],
+        imagePrompt: "retrofuturistic vector illustration, archive of enterprise AI signals, Beige Teal Amber, no readable text",
+        sourceUrls: []
+      }
+    ]
+  };
 }
 
 export function validateVisualBriefManifest(input: unknown): VisualBriefManifest {
@@ -114,6 +148,9 @@ export function validateVisualBriefManifest(input: unknown): VisualBriefManifest
   if (!manifest.date || !manifest.title || !Array.isArray(manifest.panels)) {
     throw new Error("Invalid manifest shape");
   }
+  if (!hasRequiredPanelOrder(manifest.panels)) {
+    throw new Error("Invalid manifest panel order");
+  }
   for (const [index, panel] of manifest.panels.entries()) {
     if (panel.index !== index + 1 || panel.width !== 1080 || !panel.imageUrl) {
       throw new Error("Invalid manifest panel");
@@ -122,36 +159,11 @@ export function validateVisualBriefManifest(input: unknown): VisualBriefManifest
   return manifest;
 }
 
-function ensureBriefShape(brief: VisualBriefDraft, context: BriefContext): VisualBriefDraft {
-  const panels = [...brief.panels];
-  if (panels[0]?.kind !== "cover") {
-    panels.unshift(buildFallbackVisualBrief({ ...context, items: context.items.slice(0, 1) }).panels[0]);
-  }
-  if (!panels.some((panel) => panel.kind === "takeaway")) {
-    panels.push({
-      kind: "takeaway",
-      kicker: "判断",
-      title: "真正重要的是可复用链路",
-      body: ["把新闻沉淀成流程判断，比追逐单个热点更重要。"],
-      imagePrompt: "retrofuturistic enterprise AI workflow infographic, beige teal amber",
-      sourceUrls: context.items.map((item) => item.url).slice(0, 6)
-    });
-  }
-  if (panels.at(-1)?.kind !== "footer") {
-    panels.push({
-      kind: "footer",
-      kicker: "END",
-      title: "把新闻变成组织记忆",
-      body: ["今日简报由五路公开信号源自动生成。"],
-      imagePrompt: "retrofuturistic AI archive illustration, beige teal amber",
-      sourceUrls: []
-    });
-  }
-
-  return {
-    ...brief,
-    panels: panels.slice(0, 10)
-  };
+function hasRequiredPanelOrder(panels: Array<{ kind: VisualPanelKind }>): boolean {
+  return (
+    panels.length === REQUIRED_VISUAL_PANEL_KINDS.length &&
+    panels.every((panel, index) => panel.kind === REQUIRED_VISUAL_PANEL_KINDS[index])
+  );
 }
 
 function normalizePanel(value: unknown): VisualBriefPanelDraft | null {
@@ -180,12 +192,31 @@ function normalizeKind(value: unknown): VisualPanelKind | null {
 
 function labelForKind(kind: VisualPanelKind): string {
   return {
-    cover: "AI HOT",
+    cover: "ENTERPRISE AI",
     context: "今日脉络",
-    news: "重点新闻",
+    news: "重点信号",
     takeaway: "落地判断",
     footer: "明天继续"
   }[kind];
+}
+
+function itemAt(items: NormalizedContentItem[], index: number): NormalizedContentItem {
+  return (
+    items[index] ?? {
+      title: "企业 Agent 正在进入稳定交付阶段",
+      url: "",
+      summary: "更值得关注的，不只是模型参数，而是上下文、权限、验证与复盘闭环。",
+      source: "fallback",
+      category: "enterprise-ai",
+      tags: [],
+      publishedAt: "",
+      contentHash: `fallback:${index}`
+    }
+  );
+}
+
+function promptForNews(title: string, subject: string): string {
+  return `retrofuturistic vector illustration, ${subject}, ${title}, Beige Teal Amber, editorial infographic, no readable text`;
 }
 
 function stripJsonFence(raw: string): string {

@@ -21,7 +21,9 @@ export async function generateWithDeepSeek(input: {
     },
     body: JSON.stringify({
       model: MODEL,
-      temperature: 0.6,
+      response_format: { type: "json_object" },
+      temperature: 0.2,
+      max_tokens: 5000,
       messages: [
         { role: "system", content: input.system },
         { role: "user", content: input.prompt }

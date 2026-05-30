@@ -25,10 +25,39 @@ describe("visual brief generation", () => {
 
     expect(brief.date).toBe("2026-05-29");
     expect(brief.sourceWindow).toBe("24h");
-    expect(brief.panels[0].kind).toBe("cover");
-    expect(brief.panels.at(-1)?.kind).toBe("footer");
-    expect(brief.panels.filter((panel) => panel.kind === "news")).toHaveLength(4);
+    expect(brief.panels.map((panel) => panel.kind)).toEqual([
+      "cover",
+      "context",
+      "news",
+      "news",
+      "news",
+      "news",
+      "news",
+      "news",
+      "takeaway",
+      "footer"
+    ]);
     expect(brief.panels[2].imagePrompt).toContain("retrofuturistic");
+  });
+
+  it("falls back when model JSON does not follow the ten-panel order", () => {
+    const panels = Array.from({ length: 10 }, (_, index) => ({
+      kind: "news",
+      kicker: `Panel ${index + 1}`,
+      title: `Panel ${index + 1}`,
+      body: ["Body"],
+      imagePrompt: "retrofuturistic illustration",
+      sourceUrls: []
+    }));
+
+    const brief = normalizeVisualBrief(JSON.stringify({ title: "Invalid custom title", panels }), {
+      date: "2026-05-29",
+      sourceWindow: "24h",
+      items: [item("1", "A", "A summary")]
+    });
+
+    expect(brief.title).toBe("企业 AI 落地信号图");
+    expect(brief.panels).toHaveLength(10);
   });
 
   it("keeps manifest order and blob paths stable", () => {
@@ -55,7 +84,7 @@ describe("visual brief generation", () => {
       }))
     });
 
-    expect(manifest.panels.map((panel) => panel.index)).toEqual([1, 2, 3, 4, 5]);
+    expect(manifest.panels.map((panel) => panel.index)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
     expect(panelBlobPath("2026-05-29", 1)).toBe("articles/2026-05-29/panels/01-cover.png");
     expect(panelBlobPath("2026-05-29", 5, "footer")).toBe("articles/2026-05-29/panels/05-footer.png");
   });

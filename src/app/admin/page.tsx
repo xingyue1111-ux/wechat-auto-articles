@@ -3,6 +3,14 @@ import { GenerateBriefForm } from "@/components/generate-brief-form";
 
 export const maxDuration = 300;
 
+const PUBLIC_SOURCES = [
+  "AI HOT",
+  "Hacker News",
+  "Hugging Face Daily Papers",
+  "arXiv RSS",
+  "GitHub Releases"
+];
+
 export default async function AdminPage() {
   return (
     <main className="page">
@@ -23,6 +31,13 @@ export default async function AdminPage() {
         <Metric icon={<ImagePlus size={20} />} label="配图方式" value="Seedream" />
         <Metric icon={<CalendarDays size={20} />} label="定时任务" value="19:00" />
         <Metric icon={<Link2 size={20} />} label="保存位置" value="Blob" />
+      </section>
+
+      <section className="source-strip" aria-label="公开信号源明细">
+        <span className="source-strip-label">公开信号源</span>
+        {PUBLIC_SOURCES.map((source) => (
+          <span className="source-chip" key={source}>{source}</span>
+        ))}
       </section>
 
       <section className="panel">

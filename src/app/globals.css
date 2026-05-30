@@ -107,6 +107,29 @@ h2 {
   padding: 18px;
 }
 
+.source-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 14px;
+}
+
+.source-strip-label,
+.source-chip {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.source-strip-label {
+  border-color: var(--teal);
+  color: var(--teal);
+  font-weight: 700;
+}
+
 .button,
 button {
   display: inline-flex;

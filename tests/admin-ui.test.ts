@@ -14,5 +14,16 @@ describe("admin generation form", () => {
     expect(source).toContain('className="output-console"');
     expect(source).toContain("clearLogs");
     expect(source).toContain("window.location.assign(event.redirectUrl)");
+    expect(source).toContain("任务没有返回完成状态");
+  });
+
+  it("lists all five public signal sources", async () => {
+    const source = await readFile(path.join(process.cwd(), "src", "app", "admin", "page.tsx"), "utf8");
+
+    expect(source).toContain("AI HOT");
+    expect(source).toContain("Hacker News");
+    expect(source).toContain("Hugging Face Daily Papers");
+    expect(source).toContain("arXiv RSS");
+    expect(source).toContain("GitHub Releases");
   });
 });

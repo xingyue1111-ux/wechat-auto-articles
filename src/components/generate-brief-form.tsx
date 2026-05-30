@@ -63,6 +63,7 @@ export function GenerateBriefForm() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
+      let receivedTerminalEvent = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -77,13 +78,21 @@ export function GenerateBriefForm() {
             .map((line) => line.slice(6))
             .join("\n");
           if (data) {
-            handleStreamEvent(JSON.parse(data) as StreamEvent);
+            const streamEvent = JSON.parse(data) as StreamEvent;
+            if (streamEvent.type === "complete" || streamEvent.type === "error") {
+              receivedTerminalEvent = true;
+            }
+            handleStreamEvent(streamEvent);
           }
         }
 
         if (done) {
           break;
         }
+      }
+
+      if (!receivedTerminalEvent) {
+        throw new Error("任务没有返回完成状态。可能已触发 Vercel 超时，请点击重试。");
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
