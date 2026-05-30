@@ -128,6 +128,41 @@ button.secondary {
   color: var(--ink);
 }
 
+button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.generate-form {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+}
+
+.form-note,
+.form-error {
+  margin: 0;
+  font-size: 14px;
+}
+
+.form-note {
+  color: var(--muted);
+}
+
+.form-error {
+  color: #b42318;
+}
+
+.spin {
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .login-page {
   min-height: 100dvh;
   display: grid;

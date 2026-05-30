@@ -1,6 +1,8 @@
 import { optionalEnv } from "@/lib/env";
 import { generateDailyVisualBrief } from "@/lib/server/visual-pipeline";
 
+export const maxDuration = 300;
+
 export async function POST(request: Request) {
   const adminPassword = optionalEnv("ADMIN_PASSWORD");
   const cronSecret = optionalEnv("CRON_SECRET");

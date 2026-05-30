@@ -1,5 +1,7 @@
 import { CalendarDays, ImagePlus, Link2, Sparkles } from "lucide-react";
-import { generateVisualBriefAction } from "@/app/admin/actions";
+import { GenerateBriefForm } from "@/components/generate-brief-form";
+
+export const maxDuration = 300;
 
 export default async function AdminPage() {
   return (
@@ -26,12 +28,7 @@ export default async function AdminPage() {
       <section className="panel">
         <h2>立即生成</h2>
         <p className="muted">生成过程会抓取新闻、调用 DeepSeek、调用 Seedream，再把每一屏合成为真实 PNG 长图。</p>
-        <form action={generateVisualBriefAction}>
-          <button type="submit">
-            <ImagePlus size={18} />
-            <span style={{ marginLeft: 8 }}>生成今日长图简报</span>
-          </button>
-        </form>
+        <GenerateBriefForm />
       </section>
 
       <section className="panel">
