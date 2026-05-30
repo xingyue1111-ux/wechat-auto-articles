@@ -1,5 +1,10 @@
 import { fetchAihotWithFallback } from "@/lib/aihot";
 import type { VisualBriefManifest } from "@/lib/domain/types";
+import { optionalEnv } from "@/lib/env";
+import {
+  createProgressLog,
+  type GenerationProgressReporter
+} from "@/lib/server/generation-progress";
 import { generateWithDeepSeek } from "@/lib/services/deepseek";
 import { generateSeedreamImages } from "@/lib/services/seedream";
 import { putPublicBlob } from "@/lib/storage/blob";
@@ -11,10 +16,22 @@ import { renderPanelPng } from "@/lib/visual-render/render-panel";
 export async function generateDailyVisualBrief(input: {
   now?: Date;
   date?: string;
+  onProgress?: GenerationProgressReporter;
 } = {}): Promise<VisualBriefManifest> {
   const now = input.now ?? new Date();
   const date = input.date ?? toShanghaiDate(now);
+  const report = (
+    level: Parameters<typeof createProgressLog>[0],
+    stage: Parameters<typeof createProgressLog>[1],
+    message: string,
+    detail?: string
+  ) => emitProgress(input.onProgress, createProgressLog(level, stage, message, detail));
+
+  report("info", "system", `创建 ${date} 的 AI HOT 长图简报任务`);
+  report("running", "aihot", "抓取最近 24 小时的 AI HOT 精选新闻");
   const source = await fetchAihotWithFallback({ now, minItems: 5, take: 50 });
+  report("success", "aihot", `AI HOT 抓取完成，共 ${source.items.length} 条新闻`, `素材窗口：${source.sourceWindow}`);
+  report("running", "deepseek", "调用 DeepSeek 生成简报结构");
   const briefText = await generateWithDeepSeek({
     system:
       "你是公众号视觉新闻编辑。请输出严格 JSON，不要 markdown。风格是复古未来主义，给企业 AI 落地人阅读。",
@@ -26,16 +43,37 @@ export async function generateDailyVisualBrief(input: {
     sourceWindow: source.sourceWindow,
     items: source.items
   });
+  report(
+    "success",
+    "deepseek",
+    `简报结构已确认，共 ${brief.panels.length} 个长图分镜`,
+    optionalEnv("DEEPSEEK_API_KEY") ? "使用 DeepSeek API" : "未配置 DEEPSEEK_API_KEY，使用规则化兜底内容"
+  );
+  if (!optionalEnv("ARK_API_KEY") || !optionalEnv("ARK_SEEDREAM_MODEL")) {
+    report("info", "seedream", "未配置完整 Seedream 参数，将使用本地占位配图");
+  }
   const seedreamImages = await generateSeedreamImages({
     runId: date,
-    prompts: brief.panels.map((panel) => panel.imagePrompt)
+    prompts: brief.panels.map((panel) => panel.imagePrompt),
+    onProgress: ({ index, total, status }) =>
+      report(
+        status === "running" ? "running" : "success",
+        "seedream",
+        status === "running" ? `Seedream 正在生成配图 ${index}/${total}` : `Seedream 配图 ${index}/${total} 已生成`
+      )
   });
   const persistedSeedreamUrls = await Promise.all(
-    seedreamImages.map((image, index) => persistRemoteImage(date, index + 1, image.url))
+    seedreamImages.map(async (image, index) => {
+      report("running", "blob", `保存配图素材 ${index + 1}/${seedreamImages.length}`);
+      const url = await persistRemoteImage(date, index + 1, image.url);
+      report("success", "blob", `配图素材 ${index + 1}/${seedreamImages.length} 已保存`);
+      return url;
+    })
   );
 
   const panels: VisualBriefManifest["panels"] = [];
   for (const [index, panel] of brief.panels.entries()) {
+    report("running", "render", `渲染 PNG 长图 ${index + 1}/${brief.panels.length}`, panel.title);
     const plan = buildPanelRenderPlan({
       ...panel,
       index: index + 1,
@@ -52,8 +90,10 @@ export async function generateDailyVisualBrief(input: {
       height: plan.height,
       sourceUrls: panel.sourceUrls
     });
+    report("success", "render", `PNG 长图 ${index + 1}/${brief.panels.length} 已上传`);
   }
 
+  report("running", "manifest", "写入文章索引和 latest 指针");
   const manifest = validateVisualBriefManifest({
     date,
     title: brief.title,
@@ -72,6 +112,8 @@ export async function generateDailyVisualBrief(input: {
     JSON.stringify({ date, manifestUrl: manifestBlob.url, updatedAt: now.toISOString() }, null, 2),
     "application/json"
   );
+  report("success", "manifest", "文章索引已写入 Vercel Blob");
+  report("success", "system", "长图简报生成完成");
   return manifest;
 }
 
@@ -140,4 +182,12 @@ function toShanghaiDate(date: Date): string {
     month: "2-digit",
     day: "2-digit"
   }).format(date);
+}
+
+function emitProgress(reporter: GenerationProgressReporter | undefined, event: Parameters<GenerationProgressReporter>[0]) {
+  try {
+    reporter?.(event);
+  } catch {
+    // A disconnected browser must not interrupt cron or Blob persistence.
+  }
 }

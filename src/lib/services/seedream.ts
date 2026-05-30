@@ -1,8 +1,10 @@
 import { optionalEnv } from "@/lib/env";
+import { upstreamError } from "@/lib/server/generation-progress";
 
 export async function generateSeedreamImages(input: {
   runId: string;
   prompts: string[];
+  onProgress?: (event: { index: number; total: number; status: "running" | "success" }) => void;
 }): Promise<Array<{ prompt: string; url: string; storagePath: string }>> {
   const apiKey = optionalEnv("ARK_API_KEY");
   const model = optionalEnv("ARK_SEEDREAM_MODEL");
@@ -16,6 +18,7 @@ export async function generateSeedreamImages(input: {
 
   const generated: Array<{ prompt: string; url: string; storagePath: string }> = [];
   for (const [index, prompt] of input.prompts.entries()) {
+    input.onProgress?.({ index: index + 1, total: input.prompts.length, status: "running" });
     const response = await fetch("https://ark.cn-beijing.volces.com/api/v3/images/generations", {
       method: "POST",
       headers: {
@@ -31,7 +34,7 @@ export async function generateSeedreamImages(input: {
     });
 
     if (!response.ok) {
-      throw new Error(`Seedream request failed with ${response.status}`);
+      throw await upstreamError("Seedream", response);
     }
 
     const payload = (await response.json()) as { data?: Array<{ url?: string }> };
@@ -40,6 +43,7 @@ export async function generateSeedreamImages(input: {
       url: payload.data?.[0]?.url ?? placeholderImageUrl(index + 1),
       storagePath: `article-assets/${input.runId}/images/image-${String(index + 1).padStart(2, "0")}.png`
     });
+    input.onProgress?.({ index: index + 1, total: input.prompts.length, status: "success" });
   }
 
   return generated;

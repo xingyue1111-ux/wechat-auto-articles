@@ -1,5 +1,6 @@
 import type { NormalizedContentItem } from "@/lib/domain/types";
 import type { SourceWindow } from "@/lib/domain/types";
+import { upstreamError } from "@/lib/server/generation-progress";
 
 type AihotRawItem = Record<string, unknown>;
 
@@ -105,7 +106,7 @@ export async function fetchSelectedAihotItems(
       }
     });
     if (!response.ok) {
-      throw new Error(`AI HOT request failed with ${response.status}`);
+      throw await upstreamError("AI HOT", response);
     }
 
     const page = (await response.json()) as AihotPage;

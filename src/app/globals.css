@@ -134,8 +134,8 @@ button:disabled {
 }
 
 .generate-form {
-  display: grid;
-  justify-items: start;
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
@@ -157,9 +157,144 @@ button:disabled {
   animation: spin 900ms linear infinite;
 }
 
+.generate-workbench {
+  display: grid;
+  gap: 14px;
+}
+
+.output-console {
+  overflow: hidden;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  background: #181a1f;
+  color: #d5d9df;
+  font-family: Consolas, "Courier New", monospace;
+}
+
+.output-console-header {
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #30363d;
+  background: #202329;
+  padding: 0 10px 0 12px;
+}
+
+.output-console-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #c9d1d9;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.output-status {
+  border-left: 1px solid #4b5563;
+  padding-left: 8px;
+  color: #9ca3af;
+}
+
+.output-status.running {
+  color: #f6c453;
+}
+
+.output-status.complete {
+  color: #7ee787;
+}
+
+.output-status.error {
+  color: #ff7b72;
+}
+
+.console-icon-button {
+  min-height: 28px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #9ca3af;
+}
+
+.console-icon-button:hover {
+  background: #30363d;
+  color: #f0f6fc;
+}
+
+.output-console-body {
+  min-height: 210px;
+  max-height: 360px;
+  overflow: auto;
+  padding: 12px;
+}
+
+.console-line {
+  display: grid;
+  grid-template-columns: 72px 54px 78px minmax(0, 1fr);
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.console-time {
+  color: #7d8590;
+}
+
+.console-level {
+  font-weight: 700;
+}
+
+.console-level.info {
+  color: #79c0ff;
+}
+
+.console-level.running {
+  color: #f6c453;
+}
+
+.console-level.success {
+  color: #7ee787;
+}
+
+.console-level.error {
+  color: #ff7b72;
+}
+
+.console-stage {
+  color: #d2a8ff;
+}
+
+.console-message {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.console-detail {
+  display: block;
+  color: #ffa198;
+  white-space: pre-wrap;
+}
+
+.console-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 15px;
+  margin-top: 5px;
+  background: #7ee787;
+  animation: blink 800ms steps(1) infinite;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
   }
 }
 
@@ -217,5 +352,14 @@ button:disabled {
   .topbar {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .console-line {
+    grid-template-columns: 62px 48px minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .console-stage {
+    display: none;
   }
 }

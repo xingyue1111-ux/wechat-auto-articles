@@ -30,17 +30,21 @@ export async function setAdminSession(password: string): Promise<void> {
 }
 
 export async function assertAdminSession(): Promise<void> {
+  if (!(await hasValidAdminSession())) {
+    redirect("/login");
+  }
+}
+
+export async function hasValidAdminSession(): Promise<boolean> {
   const expected = optionalEnv("ADMIN_PASSWORD");
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   if (!expected) {
-    return;
+    return true;
   }
 
   const expectedToken = createAdminSessionToken(expected);
-  if (!token || !timingSafeTextEqual(token, expectedToken)) {
-    redirect("/login");
-  }
+  return Boolean(token && timingSafeTextEqual(token, expectedToken));
 }
 
 function timingSafeTextEqual(left: string, right: string): boolean {

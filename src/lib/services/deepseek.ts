@@ -1,4 +1,5 @@
 import { optionalEnv } from "@/lib/env";
+import { upstreamError } from "@/lib/server/generation-progress";
 
 const MODEL = "deepseek-v4-pro";
 
@@ -29,7 +30,7 @@ export async function generateWithDeepSeek(input: {
   });
 
   if (!response.ok) {
-    throw new Error(`DeepSeek request failed with ${response.status}`);
+    throw await upstreamError("DeepSeek", response);
   }
 
   const payload = (await response.json()) as {
