@@ -28,7 +28,7 @@ export async function generateSeedreamImages(input: {
       body: JSON.stringify({
         model,
         prompt,
-        size: "1024x1024",
+        size: "2048x2048",
         response_format: "url"
       })
     });
