@@ -27,7 +27,7 @@ export function normalizeVisualBrief(raw: string, context: BriefContext): Visual
     return ensureBriefShape({
       date: context.date,
       title: String(parsed.title),
-      subtitle: String(parsed.subtitle ?? "AI HOT 视觉新闻简报"),
+      subtitle: String(parsed.subtitle ?? "企业 AI 落地决策简报"),
       sourceWindow: context.sourceWindow,
       panels: panels as VisualBriefPanelDraft[]
     }, context);
@@ -37,15 +37,15 @@ export function normalizeVisualBrief(raw: string, context: BriefContext): Visual
 }
 
 export function buildFallbackVisualBrief(context: BriefContext): VisualBriefDraft {
-  const newsItems = context.items.slice(0, 6);
-  const title = "今天 AI 圈的信号图";
+  const newsItems = context.items.slice(0, 4);
+  const title = "企业 AI 落地信号图";
   const panels: VisualBriefPanelDraft[] = [
     {
       kind: "cover",
-      kicker: "AI HOT",
+      kicker: "ENTERPRISE AI",
       title,
       body: [
-        `从 ${context.sourceWindow === "24h" ? "过去 24 小时" : "最近 7 天"}精选新闻里，抓出最值得企业 AI 落地人注意的变化。`,
+        `从 ${context.sourceWindow === "24h" ? "过去 24 小时" : "最近 7 天"}的多来源信号里，抓出最值得企业 AI 落地人注意的变化。`,
         "这不是新闻列表，而是一张给内部流程建设者看的信号地图。"
       ],
       imagePrompt: "retrofuturistic vector illustration, AI news radar, beige teal amber palette, clean editorial infographic",
@@ -54,21 +54,21 @@ export function buildFallbackVisualBrief(context: BriefContext): VisualBriefDraf
     {
       kind: "context",
       kicker: "今日脉络",
-      title: "AI 正在从工具走向流程",
+      title: "Agent 正在从工具走向系统",
       body: [
-        "今天的重点不是某一个模型参数，而是多个产品都在把 AI 能力嵌进工作流。",
-        "对企业来说，真正的机会在于把采集、判断、生成、审核、发布串成稳定链路。"
+        "今天的重点不是某一个模型参数，而是如何让 Agent 在真实工作里稳定运行。",
+        "对企业来说，真正的机会在于补齐上下文、规则、权限、验证和复盘闭环。"
       ],
       imagePrompt: "retrofuturistic vector illustration, workflow map, signal lines, beige teal amber, no readable text",
       sourceUrls: newsItems.map((item) => item.url)
     },
     ...newsItems.map((item, index): VisualBriefPanelDraft => ({
       kind: "news",
-      kicker: `重点 ${String(index + 1).padStart(2, "0")}`,
+      kicker: `落地雷达 ${String(index + 1).padStart(2, "0")}`,
       title: item.title,
       body: [
-        item.summary || "这条新闻值得放进今天的 AI 趋势观察里。",
-        "落地提醒：不要只看发布本身，要看它会不会改变团队的信息流、审批流或创作流。"
+        item.summary || "这条信号值得放进今天的企业 AI 趋势观察里。",
+        "落地提醒：不要只看发布本身，要看它会不会改变团队的流程、权限、成本或验证方式。"
       ],
       imagePrompt: `retrofuturistic vector illustration for AI news: ${item.title}, beige teal amber palette, editorial long-image style, no readable text`,
       sourceUrls: [item.url]
@@ -76,9 +76,9 @@ export function buildFallbackVisualBrief(context: BriefContext): VisualBriefDraf
     {
       kind: "takeaway",
       kicker: "给企业 AI 落地人的判断",
-      title: "先做链路，再追热点",
+      title: "先做 Harness，再追热点",
       body: [
-        "热点每天都会变，但企业真正需要的是可重复运行的内容和流程系统。",
+        "热点每天都会变，但企业真正需要的是可重复运行、可验证、可复盘的 Agent 系统。",
         "如果一条新闻不能转化成场景、动作和风险检查，它就只是信息噪音。"
       ],
       imagePrompt: "retrofuturistic vector illustration, enterprise AI control panel, human-in-the-loop workflow, beige teal amber",
@@ -89,7 +89,7 @@ export function buildFallbackVisualBrief(context: BriefContext): VisualBriefDraf
       kicker: "明天继续",
       title: "把新闻变成组织记忆",
       body: [
-        "今日简报由 AI HOT 精选新闻自动生成。",
+        "今日简报由五路公开信号源自动生成。",
         "适合发布前人工快速校对事实、链接和措辞。"
       ],
       imagePrompt: "retrofuturistic vector illustration, archive of AI signals, clean ending page, beige teal amber",
@@ -100,7 +100,7 @@ export function buildFallbackVisualBrief(context: BriefContext): VisualBriefDraf
   return ensureBriefShape({
     date: context.date,
     title,
-    subtitle: "复古未来主义 AI 视觉新闻简报",
+    subtitle: "企业 Agent 生产力决策简报",
     sourceWindow: context.sourceWindow,
     panels
   }, context);
@@ -142,7 +142,7 @@ function ensureBriefShape(brief: VisualBriefDraft, context: BriefContext): Visua
       kind: "footer",
       kicker: "END",
       title: "把新闻变成组织记忆",
-      body: ["今日简报由 AI HOT 精选新闻自动生成。"],
+      body: ["今日简报由五路公开信号源自动生成。"],
       imagePrompt: "retrofuturistic AI archive illustration, beige teal amber",
       sourceUrls: []
     });

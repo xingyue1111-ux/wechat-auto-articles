@@ -27,7 +27,7 @@ describe("visual brief generation", () => {
     expect(brief.sourceWindow).toBe("24h");
     expect(brief.panels[0].kind).toBe("cover");
     expect(brief.panels.at(-1)?.kind).toBe("footer");
-    expect(brief.panels.filter((panel) => panel.kind === "news")).toHaveLength(5);
+    expect(brief.panels.filter((panel) => panel.kind === "news")).toHaveLength(4);
     expect(brief.panels[2].imagePrompt).toContain("retrofuturistic");
   });
 

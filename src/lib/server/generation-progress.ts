@@ -3,6 +3,11 @@ export type GenerationLogLevel = "info" | "running" | "success" | "error";
 export type GenerationStage =
   | "system"
   | "aihot"
+  | "hacker-news"
+  | "hugging-face"
+  | "arxiv"
+  | "github-releases"
+  | "sources"
   | "deepseek"
   | "seedream"
   | "blob"

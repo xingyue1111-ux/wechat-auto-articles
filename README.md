@@ -1,18 +1,21 @@
-## AI HOT 长图式公众号简报
+## 企业 AI 落地长图式公众号简报
 
 这是一个部署到 Vercel 的轻量项目。
 
-它每天抓取 AI HOT 精选新闻，使用 DeepSeek 生成视觉简报结构，使用 Seedream 生成配图，再把每一屏合成为真实 PNG 长图。最终 HTML 页面只按顺序展示这些长图，适合做公众号长图式文章预览。
+它每天抓取 AI HOT、Hacker News、Hugging Face Daily Papers、arXiv RSS 和 GitHub Releases，筛选与企业 AI 落地有关的信号。DeepSeek 生成一个主线和 3-4 条落地雷达，Seedream 生成配图，再把每一屏合成为真实 PNG 长图。
+
+公众号面向企业 AI 落地负责人，重点关注 Agent 生产力、Harness Engineering、通用企业场景和可验证的落地方法。Coding Agent 和 Vibe Coding 是重要观察窗口，但不是唯一主题。
 
 ## 链路
 
 1. Vercel Cron 每天北京时间 19:00 触发。
-2. 抓取 AI HOT `items?mode=selected`，优先过去 24 小时，素材不足时扩展到最近 7 天。
-3. DeepSeek 生成封面、今日脉络、重点新闻、落地判断、结尾页。
-4. Seedream 为每一屏生成复古未来主义配图。
-5. Satori + Resvg 合成 1080px 宽 PNG 长图。
-6. Vercel Blob 保存长图和 manifest。
-7. `/latest` 展示最新一期，`/article/YYYY-MM-DD` 展示历史日期页。
+2. 并行抓取五路公开来源，单路失败时继续使用其他来源。
+3. 合并去重并压缩为最多 30 条企业 AI 落地候选素材。
+4. DeepSeek 生成封面、今日主线、主线深挖、落地雷达、判断和结尾页。
+5. Seedream 为每一屏生成复古未来主义配图。
+6. Satori + Resvg 合成 1080px 宽 PNG 长图。
+7. Vercel Blob 保存长图和 manifest。
+8. `/latest` 展示最新一期，`/article/YYYY-MM-DD` 展示历史日期页。
 
 ## 本地启动
 

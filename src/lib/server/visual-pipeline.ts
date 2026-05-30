@@ -1,4 +1,7 @@
-import { fetchAihotWithFallback } from "@/lib/aihot";
+import {
+  collectEnterpriseAiCandidates,
+  type ContentSourceProgressEvent
+} from "@/lib/content-sources/aggregate";
 import type { VisualBriefManifest } from "@/lib/domain/types";
 import { optionalEnv } from "@/lib/env";
 import {
@@ -27,14 +30,28 @@ export async function generateDailyVisualBrief(input: {
     detail?: string
   ) => emitProgress(input.onProgress, createProgressLog(level, stage, message, detail));
 
-  report("info", "system", `创建 ${date} 的 AI HOT 长图简报任务`);
-  report("running", "aihot", "抓取最近 24 小时的 AI HOT 精选新闻");
-  const source = await fetchAihotWithFallback({ now, minItems: 5, take: 50 });
-  report("success", "aihot", `AI HOT 抓取完成，共 ${source.items.length} 条新闻`, `素材窗口：${source.sourceWindow}`);
+  report("info", "system", `创建 ${date} 的企业 AI 落地长图简报任务`);
+  report("running", "sources", "并行抓取五路公开信号源");
+  const source = await collectEnterpriseAiCandidates({
+    now,
+    onProgress: (event) =>
+      report(
+        event.status === "running" ? "running" : event.status === "success" ? "success" : "error",
+        sourceProgressStage(event),
+        sourceProgressMessage(event),
+        event.detail
+      )
+  });
+  report(
+    "success",
+    "sources",
+    `候选内容池已确认，共 ${source.items.length} 条素材送入 DeepSeek`,
+    source.failures.length ? `${source.failures.length} 路来源暂时不可用，其余来源继续运行` : "五路来源均可用"
+  );
   report("running", "deepseek", "调用 DeepSeek 生成简报结构");
   const briefText = await generateWithDeepSeek({
     system:
-      "你是公众号视觉新闻编辑。请输出严格 JSON，不要 markdown。风格是复古未来主义，给企业 AI 落地人阅读。",
+      "你是企业 AI 落地公众号的视觉新闻编辑。请输出严格 JSON，不要 markdown。重点关注 Agent 生产力、Harness Engineering、流程治理与可复用的企业实践。风格是复古未来主义。",
     prompt: buildBriefPrompt(date, source.sourceWindow, source.items),
     fallback: JSON.stringify(buildFallbackVisualBrief({ date, sourceWindow: source.sourceWindow, items: source.items }))
   });
@@ -123,11 +140,11 @@ function buildBriefPrompt(
   items: Array<{ title: string; summary: string; url: string; source: string }>
 ): string {
   const news = items
-    .slice(0, 12)
-    .map((item, index) => `${index + 1}. ${item.title}\n来源：${item.source}\n摘要：${item.summary}\n链接：${item.url}`)
+    .slice(0, 30)
+    .map((item, index) => `${index + 1}. ${item.title}\n来源：${item.source}\n摘要：${item.summary.slice(0, 600)}\n链接：${item.url}`)
     .join("\n\n");
 
-  return `请基于 AI HOT 精选新闻，生成一篇由多张长图构成的视觉新闻简报。
+  return `请基于多来源信号，生成一篇面向企业 AI 落地负责人的视觉决策简报。
 
 日期：${date}
 时间窗口：${sourceWindow}
@@ -148,7 +165,10 @@ function buildBriefPrompt(
   ]
 }
 
-页面结构必须包含：封面、今日脉络、5-7 条重点新闻卡、给企业 AI 落地人的判断、结尾页。
+页面结构必须包含：封面、今日主线、3-4 屏主线深挖、3-4 条落地雷达简讯、给企业 AI 落地人的判断、结尾页。
+请围绕一个真正影响企业效率、流程、治理、权限、安全、成本或组织协作的变化展开。
+Coding Agent 和 Vibe Coding 是重要观察窗口，但除非发生重大变化，不要让整篇文章只服务开发者。
+重点解释 Harness Engineering：上下文、规则、技能、权限、验证、复盘如何让 Agent 稳定完成工作。
 排版方向参考中文科普公众号的连续长图分镜：大标题、短段落、强节奏、每屏一个观点。
 不要复制任何具体 IP、角色形象或原文画风。
 
@@ -190,4 +210,17 @@ function emitProgress(reporter: GenerationProgressReporter | undefined, event: P
   } catch {
     // A disconnected browser must not interrupt cron or Blob persistence.
   }
+}
+
+function sourceProgressStage(
+  event: ContentSourceProgressEvent
+): Parameters<typeof createProgressLog>[1] {
+  return event.id === "aggregate" ? "sources" : event.id;
+}
+
+function sourceProgressMessage(event: ContentSourceProgressEvent): string {
+  if (event.status === "running") return `抓取 ${event.label}`;
+  if (event.status === "error") return `${event.label} 暂时不可用，继续使用其他来源`;
+  if (event.id === "aggregate") return `${event.label}：${event.detail ?? "处理完成"}，共 ${event.count ?? 0} 条`;
+  return `${event.label} 抓取完成，共 ${event.count ?? 0} 条`;
 }
