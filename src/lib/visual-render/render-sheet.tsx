@@ -55,7 +55,7 @@ function CoverSheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
       <div style={{ display: "flex", flexDirection: "column", padding: "30px 58px 0" }}>
         <Kicker>{cover.kicker}</Kicker>
         <h1 style={coverTitleStyle}>
-          <WrappedLines text={cover.title} maxUnits={15} />
+          <WrappedLines text={cover.title} maxUnits={20} />
         </h1>
         <Ornament />
         <LeadText lines={cover.body} />
@@ -225,12 +225,12 @@ function EditorialBlock({
   compact?: boolean;
   radar?: boolean;
 }): ReactNode {
-  const contentWidth = radar ? 812 : compact ? 848 : 830;
+  const contentWidth = radar ? 842 : 864;
   return (
     <div
       style={{
         display: "flex",
-        gap: 18,
+        gap: 12,
         padding: compact ? "0 0 14px" : "30px 0 34px",
         borderTop: compact ? "0 solid transparent" : "2px solid rgba(23,33,31,0.2)"
       }}
@@ -249,14 +249,14 @@ function EditorialBlock({
       >
         {String(index).padStart(2, "0")}
       </div>
-      <div style={{ display: "flex", width: contentWidth, flexShrink: 0, flexDirection: "column", paddingRight: 24 }}>
+      <div style={{ display: "flex", width: contentWidth, flexShrink: 0, flexDirection: "column", paddingRight: 12 }}>
         <Kicker>{panel.kicker}</Kicker>
         <span style={{ ...sectionTitleStyle, flexDirection: "column", marginTop: 9, fontSize: compact ? 43 : 47 }}>
-          <WrappedLines text={panel.title} maxUnits={radar ? 14 : compact ? 16 : 15} />
+          <WrappedLines text={panel.title} maxUnits={radar ? 15 : compact ? 17 : 16} />
         </span>
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 16 }}>
           {panel.body.map((line, bodyIndex) => (
-            <BodyCopy key={bodyIndex} text={line} maxUnits={radar ? 25 : 26} />
+            <BodyCopy key={bodyIndex} text={line} maxUnits={radar ? 27 : 28} />
           ))}
         </div>
       </div>

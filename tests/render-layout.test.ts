@@ -23,4 +23,24 @@ describe("magazine sheet layout", () => {
     expect(source).toContain("contentWidth");
     expect(source).toContain("paddingRight: 24");
   });
+
+  it("lets cover headlines use the available width before wrapping", async () => {
+    const source = await readFile(
+      path.join(process.cwd(), "src", "lib", "visual-render", "render-sheet.tsx"),
+      "utf8"
+    );
+
+    expect(source).toContain("<WrappedLines text={cover.title} maxUnits={20} />");
+  });
+
+  it("aligns editorial copy close to the image right edge", async () => {
+    const source = await readFile(
+      path.join(process.cwd(), "src", "lib", "visual-render", "render-sheet.tsx"),
+      "utf8"
+    );
+
+    expect(source).toContain("const contentWidth = radar ? 842 : 864");
+    expect(source).toContain("gap: 12");
+    expect(source).toContain("paddingRight: 12");
+  });
 });
