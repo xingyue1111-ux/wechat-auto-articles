@@ -9,13 +9,15 @@ import {
   createProgressLog,
   type GenerationProgressReporter
 } from "@/lib/server/generation-progress";
+import { persistSeedreamImageForRender } from "@/lib/server/persist-seedream-image";
 import { generateWithDeepSeek } from "@/lib/services/deepseek";
 import { generateSeedreamImages } from "@/lib/services/seedream";
 import { putPublicBlob } from "@/lib/storage/blob";
-import { articleManifestPath, latestManifestPath, panelBlobPath, seedreamBlobPath } from "@/lib/storage/paths";
+import { articleManifestPath, latestManifestPath, panelBlobPath } from "@/lib/storage/paths";
 import { buildFallbackVisualBrief, normalizeVisualBrief, validateVisualBriefManifest } from "@/lib/visual-brief";
-import { buildPanelRenderPlan } from "@/lib/visual-render/render-plan";
-import { renderPanelPng } from "@/lib/visual-render/render-panel";
+import { selectIllustrationPrompts } from "@/lib/visual-render/illustrations";
+import { renderSheetPng } from "@/lib/visual-render/render-sheet";
+import { buildVisualBriefSheetPlans } from "@/lib/visual-render/sheet-plan";
 
 export async function generateDailyVisualBrief(input: {
   now?: Date;
@@ -73,7 +75,7 @@ export async function generateDailyVisualBrief(input: {
   }
   const seedreamImages = await generateSeedreamImages({
     runId: date,
-    prompts: brief.panels.map((panel) => panel.imagePrompt),
+    prompts: selectIllustrationPrompts(brief.panels.map((panel) => panel.imagePrompt)),
     onProgress: ({ index, total, status, detail }) => {
       if (status === "running") {
         report("running", "seedream", `Seedream 正在生成配图 ${index}/${total}`);
@@ -90,32 +92,34 @@ export async function generateDailyVisualBrief(input: {
   const persistedSeedreamUrls = await Promise.all(
     seedreamImages.map(async (image, index) => {
       report("running", "blob", `保存配图素材 ${index + 1}/${seedreamImages.length}`);
-      const url = await persistRemoteImage(date, index + 1, image.url);
+      const persisted = await persistSeedreamImageForRender(date, index + 1, image.url);
       report("success", "blob", `配图素材 ${index + 1}/${seedreamImages.length} 已保存`);
-      return url;
+      return persisted.renderUrl;
     })
   );
 
+  const sheetPlans = buildVisualBriefSheetPlans(brief.panels, persistedSeedreamUrls);
   const panels: VisualBriefManifest["panels"] = [];
-  for (const [index, panel] of brief.panels.entries()) {
-    report("running", "render", `渲染 PNG 长图 ${index + 1}/${brief.panels.length}`, panel.title);
-    const plan = buildPanelRenderPlan({
-      ...panel,
-      index: index + 1,
-      seedreamImageUrl: persistedSeedreamUrls[index] ?? seedreamImages[index]?.url
-    });
-    const png = await renderPanelPng(plan);
-    const blob = await putPublicBlob(panelBlobPath(date, index + 1, panel.kind), png, "image/png");
+  for (const [index, sheet] of sheetPlans.entries()) {
+    report("running", "render", `渲染 PNG 长图 ${index + 1}/${sheetPlans.length}`, sheet.title);
+    const renderStartedAt = Date.now();
+    const png = await renderSheetPng(sheet);
+    const blob = await putPublicBlob(panelBlobPath(date, index + 1, sheet.kind), png, "image/png");
     panels.push({
       index: index + 1,
-      kind: panel.kind,
-      title: panel.title,
+      kind: sheet.kind,
+      title: sheet.title,
       imageUrl: blob.url,
-      width: plan.width,
-      height: plan.height,
-      sourceUrls: panel.sourceUrls
+      width: sheet.width,
+      height: sheet.height,
+      sourceUrls: Array.from(new Set(sheet.panels.flatMap((panel) => panel.sourceUrls)))
     });
-    report("success", "render", `PNG 长图 ${index + 1}/${brief.panels.length} 已上传`);
+    report(
+      "success",
+      "render",
+      `PNG 长图 ${index + 1}/${sheetPlans.length} 已上传`,
+      `耗时 ${((Date.now() - renderStartedAt) / 1000).toFixed(1)} 秒`
+    );
   }
 
   report("running", "manifest", "写入文章索引和 latest 指针");
@@ -140,25 +144,6 @@ export async function generateDailyVisualBrief(input: {
   report("success", "manifest", "文章索引已写入 Vercel Blob");
   report("success", "system", "长图简报生成完成");
   return manifest;
-}
-
-async function persistRemoteImage(date: string, index: number, url: string): Promise<string> {
-  if (url.startsWith("data:")) {
-    return url;
-  }
-
-  try {
-    const response = await fetch(url, { signal: AbortSignal.timeout(20_000) });
-    if (!response.ok) {
-      return url;
-    }
-    const contentType = response.headers.get("content-type") ?? "image/png";
-    const body = new Uint8Array(await response.arrayBuffer());
-    const blob = await putPublicBlob(seedreamBlobPath(date, index), body, contentType);
-    return blob.url;
-  } catch {
-    return url;
-  }
 }
 
 function toShanghaiDate(date: Date): string {

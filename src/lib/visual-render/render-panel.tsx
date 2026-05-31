@@ -83,7 +83,6 @@ function panelNode(plan: PanelRenderPlan): ReactNode {
       <div
         style={{
           position: "relative",
-          zIndex: 1,
           display: "flex",
           flexDirection: "column",
           height: "100%",

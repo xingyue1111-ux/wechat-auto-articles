@@ -73,7 +73,12 @@ describe("visual brief generation", () => {
       subtitle: brief.subtitle,
       generatedAt: "2026-05-29T11:00:00.000Z",
       sourceWindow: brief.sourceWindow,
-      panels: brief.panels.map((panel, index) => ({
+      panels: [
+        { kind: "cover", title: "封面与今日脉络" },
+        { kind: "news", title: "主线拆解" },
+        { kind: "news", title: "雷达信号" },
+        { kind: "takeaway", title: "落地判断" }
+      ].map((panel, index) => ({
         index: index + 1,
         kind: panel.kind,
         title: panel.title,
@@ -84,7 +89,7 @@ describe("visual brief generation", () => {
       }))
     });
 
-    expect(manifest.panels.map((panel) => panel.index)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(manifest.panels.map((panel) => panel.index)).toEqual([1, 2, 3, 4]);
     expect(panelBlobPath("2026-05-29", 1)).toBe("articles/2026-05-29/panels/01-cover.png");
     expect(panelBlobPath("2026-05-29", 5, "footer")).toBe("articles/2026-05-29/panels/05-footer.png");
   });

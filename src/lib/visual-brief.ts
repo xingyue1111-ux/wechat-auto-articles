@@ -27,6 +27,8 @@ export const REQUIRED_VISUAL_PANEL_KINDS: VisualPanelKind[] = [
   "footer"
 ];
 
+const REQUIRED_MANIFEST_SHEET_KINDS: VisualPanelKind[] = ["cover", "news", "news", "takeaway"];
+
 export { panelBlobPath };
 
 export function normalizeVisualBrief(raw: string, context: BriefContext): VisualBriefDraft {
@@ -148,7 +150,7 @@ export function validateVisualBriefManifest(input: unknown): VisualBriefManifest
   if (!manifest.date || !manifest.title || !Array.isArray(manifest.panels)) {
     throw new Error("Invalid manifest shape");
   }
-  if (!hasRequiredPanelOrder(manifest.panels)) {
+  if (!hasRequiredManifestSheetOrder(manifest.panels)) {
     throw new Error("Invalid manifest panel order");
   }
   for (const [index, panel] of manifest.panels.entries()) {
@@ -163,6 +165,13 @@ function hasRequiredPanelOrder(panels: Array<{ kind: VisualPanelKind }>): boolea
   return (
     panels.length === REQUIRED_VISUAL_PANEL_KINDS.length &&
     panels.every((panel, index) => panel.kind === REQUIRED_VISUAL_PANEL_KINDS[index])
+  );
+}
+
+function hasRequiredManifestSheetOrder(panels: Array<{ kind: VisualPanelKind }>): boolean {
+  return (
+    panels.length === REQUIRED_MANIFEST_SHEET_KINDS.length &&
+    panels.every((panel, index) => panel.kind === REQUIRED_MANIFEST_SHEET_KINDS[index])
   );
 }
 
