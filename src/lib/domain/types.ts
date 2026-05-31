@@ -32,12 +32,24 @@ export type VisualBriefDraft = {
   panels: VisualBriefPanelDraft[];
 };
 
+export type ArchivedVisualBriefPanel = Pick<
+  VisualBriefPanelDraft,
+  "kind" | "kicker" | "title" | "body" | "sourceUrls"
+>;
+
 export type VisualBriefManifest = {
   date: string;
   title: string;
   subtitle: string;
   generatedAt: string;
   sourceWindow: SourceWindow;
+  article?: {
+    panels: ArchivedVisualBriefPanel[];
+  };
+  illustrations?: Array<{
+    index: number;
+    imageUrl: string;
+  }>;
   panels: Array<{
     index: number;
     kind: VisualPanelKind;

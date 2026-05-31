@@ -156,12 +156,53 @@ export function validateVisualBriefManifest(input: unknown): VisualBriefManifest
   if (!hasRequiredManifestSheetOrder(manifest.panels)) {
     throw new Error("Invalid manifest panel order");
   }
+  if (!hasValidManifestArchive(manifest)) {
+    throw new Error("Invalid manifest archive");
+  }
   for (const [index, panel] of manifest.panels.entries()) {
     if (panel.index !== index + 1 || panel.width !== 1080 || !panel.imageUrl) {
       throw new Error("Invalid manifest panel");
     }
   }
   return manifest;
+}
+
+function hasValidManifestArchive(manifest: VisualBriefManifest): boolean {
+  if (manifest.article !== undefined) {
+    if (!manifest.article || !Array.isArray(manifest.article.panels)) {
+      return false;
+    }
+    if (!manifest.article.panels.every((panel) =>
+      Boolean(
+        panel &&
+        normalizeKind(panel.kind) &&
+        typeof panel.kicker === "string" &&
+        typeof panel.title === "string" &&
+        Array.isArray(panel.body) &&
+        panel.body.every((line) => typeof line === "string") &&
+        Array.isArray(panel.sourceUrls) &&
+        panel.sourceUrls.every((url) => typeof url === "string")
+      )
+    )) {
+      return false;
+    }
+  }
+  if (manifest.illustrations !== undefined) {
+    if (!Array.isArray(manifest.illustrations)) {
+      return false;
+    }
+    if (!manifest.illustrations.every((illustration, index) =>
+      Boolean(
+        illustration &&
+        illustration.index === index + 1 &&
+        typeof illustration.imageUrl === "string" &&
+        illustration.imageUrl
+      )
+    )) {
+      return false;
+    }
+  }
+  return true;
 }
 
 function hasRequiredPanelOrder(panels: Array<{ kind: VisualPanelKind }>): boolean {

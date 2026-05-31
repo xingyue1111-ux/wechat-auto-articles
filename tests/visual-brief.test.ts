@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   buildFallbackVisualBrief,
@@ -106,7 +108,77 @@ describe("visual brief generation", () => {
     expect(panelBlobPath("2026-05-29", 1)).toBe("articles/2026-05-29/panels/01-cover.png");
     expect(panelBlobPath("2026-05-29", 5, "footer")).toBe("articles/2026-05-29/panels/05-footer.png");
   });
+
+  it("keeps archived article copy and Seedream illustrations", () => {
+    const manifest = validateVisualBriefManifest({
+      date: "2026-05-31",
+      title: "企业 AI 日报",
+      subtitle: "过去 24 小时",
+      generatedAt: "2026-05-31T11:00:00.000Z",
+      sourceWindow: "24h",
+      article: {
+        panels: [{
+          kind: "cover",
+          kicker: "本日主线",
+          title: "企业 AI 日报",
+          body: ["正文"],
+          sourceUrls: ["https://example.com/source"]
+        }]
+      },
+      illustrations: [{ index: 1, imageUrl: "https://blob.example/seedream-01.png" }],
+      panels: manifestPanels()
+    });
+
+    expect(manifest.article?.panels[0].body).toEqual(["正文"]);
+    expect(manifest.illustrations?.[0].imageUrl).toContain("seedream-01.png");
+  });
+
+  it("keeps older manifests readable without archive extras", () => {
+    const manifest = validateVisualBriefManifest({
+      date: "2026-05-30",
+      title: "旧简报",
+      subtitle: "兼容旧数据",
+      generatedAt: "2026-05-30T11:00:00.000Z",
+      sourceWindow: "24h",
+      panels: manifestPanels()
+    });
+
+    expect(manifest.article).toBeUndefined();
+    expect(manifest.illustrations).toBeUndefined();
+  });
+
+  it("rejects malformed archive extras", () => {
+    expect(() => validateVisualBriefManifest({
+      date: "2026-05-31",
+      title: "企业 AI 日报",
+      subtitle: "过去 24 小时",
+      generatedAt: "2026-05-31T11:00:00.000Z",
+      sourceWindow: "24h",
+      article: { panels: "not-an-array" },
+      illustrations: [{ index: 1, imageUrl: "" }],
+      panels: manifestPanels()
+    })).toThrow("Invalid manifest archive");
+  });
+
+  it("writes article copy and Seedream illustrations from the visual pipeline", async () => {
+    const source = await readFile(
+      path.join(process.cwd(), "src", "lib", "server", "visual-pipeline.ts"),
+      "utf8"
+    );
+
+    expect(source).toContain("article: {");
+    expect(source).toContain("illustrations: persistedSeedreamUrls.map");
+  });
 });
+
+function manifestPanels() {
+  return [
+    { index: 1, kind: "cover", title: "封面", imageUrl: "https://blob.example/1.png", width: 1080, height: 2000, sourceUrls: [] },
+    { index: 2, kind: "news", title: "主线", imageUrl: "https://blob.example/2.png", width: 1080, height: 2000, sourceUrls: [] },
+    { index: 3, kind: "news", title: "雷达", imageUrl: "https://blob.example/3.png", width: 1080, height: 2000, sourceUrls: [] },
+    { index: 4, kind: "takeaway", title: "判断", imageUrl: "https://blob.example/4.png", width: 1080, height: 2000, sourceUrls: [] }
+  ];
+}
 
 function item(id: string, title: string, summary: string): NormalizedContentItem {
   return {

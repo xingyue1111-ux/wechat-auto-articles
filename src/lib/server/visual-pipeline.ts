@@ -130,6 +130,19 @@ export async function generateDailyVisualBrief(input: {
     subtitle: brief.subtitle,
     generatedAt: now.toISOString(),
     sourceWindow: brief.sourceWindow,
+    article: {
+      panels: brief.panels.map(({ kind, kicker, title, body, sourceUrls }) => ({
+        kind,
+        kicker,
+        title,
+        body,
+        sourceUrls
+      }))
+    },
+    illustrations: persistedSeedreamUrls.map((imageUrl, index) => ({
+      index: index + 1,
+      imageUrl
+    })),
     panels
   });
   const manifestJson = JSON.stringify(manifest, null, 2);
