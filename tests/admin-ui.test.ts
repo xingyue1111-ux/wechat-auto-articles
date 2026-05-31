@@ -15,6 +15,8 @@ describe("admin generation form", () => {
     expect(source).toContain("clearLogs");
     expect(source).toContain("window.location.assign(event.redirectUrl)");
     expect(source).toContain("任务没有返回完成状态");
+    expect(source).toContain('timestamp: ""');
+    expect(source).toContain('if (!timestamp) return "--:--:--"');
   });
 
   it("lists all five public signal sources", async () => {

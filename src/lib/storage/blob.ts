@@ -29,7 +29,8 @@ export async function putPublicBlob(
   return put(pathname, putBody, {
     access: "public",
     contentType,
-    addRandomSuffix: false
+    addRandomSuffix: false,
+    allowOverwrite: true
   });
 }
 

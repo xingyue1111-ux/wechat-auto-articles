@@ -19,19 +19,9 @@ type StreamEvent =
   | { type: "complete"; redirectUrl: string; timestamp: string }
   | { type: "error"; message: string; detail?: string; timestamp: string };
 
-const initialLogs: ConsoleLog[] = [
-  {
-    type: "log",
-    level: "info",
-    stage: "system",
-    message: "准备就绪。点击生成后，这里会实时显示每一步执行状态。",
-    timestamp: new Date().toISOString()
-  }
-];
-
 export function GenerateBriefForm() {
   const [status, setStatus] = useState<ConsoleStatus>("idle");
-  const [logs, setLogs] = useState<ConsoleLog[]>(initialLogs);
+  const [logs, setLogs] = useState<ConsoleLog[]>([createInitialLog()]);
   const outputRef = useRef<HTMLDivElement>(null);
   const isRunning = status === "running";
 
@@ -135,7 +125,7 @@ export function GenerateBriefForm() {
 
   function clearLogs() {
     if (!isRunning) {
-      setLogs(initialLogs);
+      setLogs([createInitialLog()]);
       setStatus("idle");
     }
   }
@@ -193,6 +183,16 @@ export function GenerateBriefForm() {
   );
 }
 
+function createInitialLog(): ConsoleLog {
+  return {
+    type: "log",
+    level: "info",
+    stage: "system",
+    message: "准备就绪。点击生成后，这里会实时显示每一步执行状态。",
+    timestamp: ""
+  };
+}
+
 function statusLabel(status: ConsoleStatus): string {
   return {
     idle: "READY",
@@ -212,6 +212,7 @@ function levelLabel(level: ConsoleLog["level"]): string {
 }
 
 function formatTime(timestamp: string): string {
+  if (!timestamp) return "--:--:--";
   return new Intl.DateTimeFormat("zh-CN", {
     hour: "2-digit",
     minute: "2-digit",
