@@ -26,6 +26,7 @@ export async function generateDailyVisualBrief(input: {
 } = {}): Promise<VisualBriefManifest> {
   const now = input.now ?? new Date();
   const date = input.date ?? toShanghaiDate(now);
+  const revision = buildRunRevision(now);
   const report = (
     level: Parameters<typeof createProgressLog>[0],
     stage: Parameters<typeof createProgressLog>[1],
@@ -74,7 +75,7 @@ export async function generateDailyVisualBrief(input: {
     report("info", "seedream", "未配置完整 Seedream 参数，将使用本地占位配图");
   }
   const seedreamImages = await generateSeedreamImages({
-    runId: date,
+    runId: revision,
     prompts: selectIllustrationPrompts(brief.panels.map((panel) => panel.imagePrompt)),
     onProgress: ({ index, total, status, detail }) => {
       if (status === "running") {
@@ -92,7 +93,7 @@ export async function generateDailyVisualBrief(input: {
   const persistedSeedreamUrls = await Promise.all(
     seedreamImages.map(async (image, index) => {
       report("running", "blob", `保存配图素材 ${index + 1}/${seedreamImages.length}`);
-      const persisted = await persistSeedreamImageForRender(date, index + 1, image.url);
+      const persisted = await persistSeedreamImageForRender(date, index + 1, image.url, revision);
       report("success", "blob", `配图素材 ${index + 1}/${seedreamImages.length} 已保存`);
       return persisted.renderUrl;
     })
@@ -104,7 +105,7 @@ export async function generateDailyVisualBrief(input: {
     report("running", "render", `渲染 PNG 长图 ${index + 1}/${sheetPlans.length}`, sheet.title);
     const renderStartedAt = Date.now();
     const png = await renderSheetPng(sheet);
-    const blob = await putPublicBlob(panelBlobPath(date, index + 1, sheet.kind), png, "image/png");
+    const blob = await putPublicBlob(panelBlobPath(date, index + 1, sheet.kind, revision), png, "image/png");
     panels.push({
       index: index + 1,
       kind: sheet.kind,
@@ -131,9 +132,15 @@ export async function generateDailyVisualBrief(input: {
     sourceWindow: brief.sourceWindow,
     panels
   });
+  const manifestJson = JSON.stringify(manifest, null, 2);
   const manifestBlob = await putPublicBlob(
+    articleManifestPath(date, revision),
+    manifestJson,
+    "application/json"
+  );
+  await putPublicBlob(
     articleManifestPath(date),
-    JSON.stringify(manifest, null, 2),
+    manifestJson,
     "application/json"
   );
   await putPublicBlob(
@@ -144,6 +151,10 @@ export async function generateDailyVisualBrief(input: {
   report("success", "manifest", "文章索引已写入 Vercel Blob");
   report("success", "system", "长图简报生成完成");
   return manifest;
+}
+
+function buildRunRevision(now: Date): string {
+  return `run-${now.toISOString().replace(/\D/g, "")}`;
 }
 
 function toShanghaiDate(date: Date): string {

@@ -1,12 +1,24 @@
 import { describe, expect, it } from "vitest";
 import { getTextBlob, listPublicBlobPathnames, putPublicBlob } from "@/lib/storage/blob";
-import { articleManifestPath, latestManifestPath, seedreamBlobPath } from "@/lib/storage/paths";
+import { articleManifestPath, latestManifestPath, panelBlobPath, seedreamBlobPath } from "@/lib/storage/paths";
 
 describe("blob storage paths", () => {
   it("uses the agreed Vercel Blob layout", () => {
     expect(articleManifestPath("2026-05-29")).toBe("articles/2026-05-29/manifest.json");
     expect(seedreamBlobPath("2026-05-29", 2)).toBe("articles/2026-05-29/seedream/02-illustration.png");
     expect(latestManifestPath()).toBe("latest.json");
+  });
+
+  it("uses revisioned image paths so same-day reruns cannot serve stale CDN images", () => {
+    expect(seedreamBlobPath("2026-05-31", 2, "run-190000")).toBe(
+      "articles/2026-05-31/runs/run-190000/seedream/02-illustration.png"
+    );
+    expect(panelBlobPath("2026-05-31", 1, "cover", "run-190000")).toBe(
+      "articles/2026-05-31/runs/run-190000/panels/01-cover.png"
+    );
+    expect(articleManifestPath("2026-05-31", "run-190000")).toBe(
+      "articles/2026-05-31/runs/run-190000/manifest.json"
+    );
   });
 
   it("keeps local fallback blobs readable when Vercel Blob is not configured", async () => {

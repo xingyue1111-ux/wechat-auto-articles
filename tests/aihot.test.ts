@@ -60,17 +60,11 @@ describe("AI HOT ingestion", () => {
     expect(agents[0]).toBe(AIHOT_BROWSER_USER_AGENT);
   });
 
-  it("expands from 24h to 7d when the first window has too few items", async () => {
+  it("keeps the strict 24h window even when the result has too few items", async () => {
     const urls: string[] = [];
     const fetcher = async (input: RequestInfo | URL) => {
       urls.push(String(input));
-      if (urls.length === 1) {
-        return Response.json({ items: [], nextCursor: null });
-      }
-      return Response.json({
-        items: [{ id: "a", title: "A", url: "https://example.com/a" }],
-        nextCursor: null
-      });
+      return Response.json({ items: [], nextCursor: null });
     };
 
     const result = await fetchAihotWithFallback({
@@ -79,9 +73,9 @@ describe("AI HOT ingestion", () => {
       fetcher
     });
 
-    expect(result.sourceWindow).toBe("7d");
-    expect(result.items).toHaveLength(1);
+    expect(result.sourceWindow).toBe("24h");
+    expect(result.items).toHaveLength(0);
     expect(urls[0]).toContain("since=2026-05-28T12%3A00%3A00.000Z");
-    expect(urls[1]).toContain("since=2026-05-22T12%3A00%3A00.000Z");
+    expect(urls).toHaveLength(1);
   });
 });

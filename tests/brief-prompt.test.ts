@@ -13,5 +13,7 @@ describe("enterprise AI brief prompt", () => {
     expect(prompt).toContain("10-footer");
     expect(prompt).toContain('"kind": "cover"');
     expect(prompt).toContain("主线与雷达素材不得重复");
+    expect(prompt).toContain("标题、摘要和正文必须全部使用简体中文");
+    expect(prompt).toContain("即使输入素材是英文，也必须先翻译为简体中文");
   });
 });

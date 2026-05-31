@@ -3,6 +3,7 @@ import type { NormalizedContentItem } from "@/lib/domain/types";
 import {
   compressEnterpriseCandidates,
   dedupeContentItems,
+  filterItemsWithinHours,
   scoreEnterpriseRelevance
 } from "@/lib/content-sources/shared";
 import { normalizeHackerNewsItem } from "@/lib/content-sources/hacker-news";
@@ -66,6 +67,18 @@ describe("enterprise AI content utilities", () => {
     ]);
 
     expect(compressed.map((candidate) => candidate.externalId)).toEqual(["1"]);
+  });
+
+  it("keeps only the rolling previous 24 hours and sorts newest first", () => {
+    const now = new Date("2026-05-31T12:00:00.000Z");
+    const recent = { ...item("AI HOT", "recent", "Agent workflow", "https://example.com/recent"), publishedAt: "2026-05-31T11:00:00.000Z" };
+    const older = { ...item("AI HOT", "older", "Agent workflow", "https://example.com/older"), publishedAt: "2026-05-30T13:00:00.000Z" };
+    const expired = { ...item("AI HOT", "expired", "Agent workflow", "https://example.com/expired"), publishedAt: "2026-05-30T11:59:59.000Z" };
+
+    expect(filterItemsWithinHours([older, expired, recent], now, 24).map((entry) => entry.externalId)).toEqual([
+      "recent",
+      "older"
+    ]);
   });
 });
 
@@ -165,6 +178,7 @@ describe("multisource aggregation", () => {
 
     const result = await collectEnterpriseAiCandidates({
       collectors,
+      now: new Date("2026-05-21T12:00:00.000Z"),
       onProgress: (event) => events.push(`${event.status}:${event.id}`)
     });
 

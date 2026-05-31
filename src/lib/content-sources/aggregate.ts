@@ -3,7 +3,7 @@ import { fetchArxivRssItems } from "@/lib/content-sources/arxiv";
 import { fetchGithubReleaseItems } from "@/lib/content-sources/github-releases";
 import { fetchHackerNewsItems } from "@/lib/content-sources/hacker-news";
 import { fetchHuggingFaceDailyPapers } from "@/lib/content-sources/hugging-face";
-import { compressEnterpriseCandidates, dedupeContentItems } from "@/lib/content-sources/shared";
+import { compressEnterpriseCandidates, dedupeContentItems, filterItemsWithinHours } from "@/lib/content-sources/shared";
 import type { NormalizedContentItem, SourceWindow } from "@/lib/domain/types";
 
 export type ContentSourceId = "aihot" | "hacker-news" | "hugging-face" | "arxiv" | "github-releases";
@@ -73,7 +73,7 @@ export async function collectEnterpriseAiCandidates(options: {
   );
   if (!successes.length) throw new Error("No content sources are currently available");
 
-  const merged = dedupeContentItems(successes.flatMap((result) => result.items));
+  const merged = filterItemsWithinHours(dedupeContentItems(successes.flatMap((result) => result.items)), now, 24);
   options.onProgress?.({
     id: "aggregate",
     label: "Source aggregator",
@@ -81,7 +81,7 @@ export async function collectEnterpriseAiCandidates(options: {
     count: merged.length,
     detail: "Merged and deduplicated candidates"
   });
-  const items = compressEnterpriseCandidates(merged, options.limit ?? 30);
+  const items = filterItemsWithinHours(compressEnterpriseCandidates(merged, options.limit ?? 30), now, 24);
   if (!items.length) throw new Error("No usable enterprise AI candidates were collected");
   options.onProgress?.({
     id: "aggregate",
@@ -92,7 +92,7 @@ export async function collectEnterpriseAiCandidates(options: {
   });
 
   return {
-    sourceWindow: successes.some((result) => result.sourceWindow === "7d") ? "7d" : "24h",
+    sourceWindow: "24h",
     items,
     failures
   };

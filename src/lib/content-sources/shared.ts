@@ -107,6 +107,20 @@ export function compressEnterpriseCandidates(
   return compressed;
 }
 
+export function filterItemsWithinHours(
+  items: NormalizedContentItem[],
+  now: Date,
+  hours: number
+): NormalizedContentItem[] {
+  const cutoff = now.getTime() - hours * 60 * 60 * 1000;
+  return items
+    .filter((item) => {
+      const publishedAt = new Date(item.publishedAt).getTime();
+      return Number.isFinite(publishedAt) && publishedAt >= cutoff && publishedAt <= now.getTime();
+    })
+    .sort((left, right) => new Date(right.publishedAt).getTime() - new Date(left.publishedAt).getTime());
+}
+
 export function normalizeUrlKey(url: string): string {
   if (!url) return "";
 

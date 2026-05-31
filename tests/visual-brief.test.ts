@@ -60,6 +60,19 @@ describe("visual brief generation", () => {
     expect(brief.panels).toHaveLength(10);
   });
 
+  it("does not expose raw English headlines in fallback reader copy", () => {
+    const brief = buildFallbackVisualBrief({
+      date: "2026-05-29",
+      sourceWindow: "24h",
+      items: [item("1", "AgentDoG continuous coding agents", "A scalable alignment framework")]
+    });
+
+    expect(brief.panels[2].title).toBe("企业 AI 工具正在改变成本与交付方式");
+    expect(brief.panels[2].body[0]).toContain("公开信号");
+    expect(brief.panels[5].title).not.toBe("AgentDoG continuous coding agents");
+    expect(brief.panels[5].title).toMatch(/[\u3400-\u9fff]/u);
+  });
+
   it("keeps manifest order and blob paths stable", () => {
     const brief = buildFallbackVisualBrief({
       date: "2026-05-29",

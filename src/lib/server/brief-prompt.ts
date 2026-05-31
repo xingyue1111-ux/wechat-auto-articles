@@ -27,8 +27,10 @@ export function buildBriefPrompt(
 - panels 必须恰好包含 10 项，不得增加、删除或调换顺序。
 - 每一屏的 kind 必须严格匹配下方结构。
 - 主线与雷达素材不得重复：03-05 围绕同一条最重要主线展开，06-08 使用不同的补充信号。
+- 标题、摘要和正文必须全部使用简体中文。即使输入素材是英文，也必须先翻译为简体中文。
+- kicker 可以保留少量固定英文栏目名，但任何面向读者的信息不得直接照搬英文新闻标题或英文摘要。
 - body 每屏包含 1-3 句短文案，每句尽量少于 55 个汉字。
-- imagePrompt 必须是英文 Seedream 提示词，包含 retrofuturistic vector illustration、Beige Teal Amber、no readable text。
+- imagePrompt 必须是英文 Seedream 构图描述，不包含可读文字。系统会统一追加复古未来主义杂志风格。
 - sourceUrls 只能使用输入素材中的 URL。
 - 不复制任何公众号 IP、人物角色或既有文章版式细节。
 

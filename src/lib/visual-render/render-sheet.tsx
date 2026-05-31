@@ -1,8 +1,8 @@
 import { Resvg } from "@resvg/resvg-js";
 import satori from "satori";
 import type { ReactNode } from "react";
-import { loadVisualFonts } from "@/lib/visual-render/fonts";
 import type { VisualBriefPanelDraft } from "@/lib/domain/types";
+import { loadVisualFonts } from "@/lib/visual-render/fonts";
 import type { VisualBriefSheetPlan } from "@/lib/visual-render/sheet-plan";
 import { wrapVisualText } from "@/lib/visual-render/typography";
 
@@ -19,10 +19,7 @@ export async function renderSheetPng(plan: VisualBriefSheetPlan): Promise<Uint8A
     fonts: await loadVisualFonts()
   });
   return new Resvg(svg, {
-    fitTo: {
-      mode: "width",
-      value: plan.width
-    }
+    fitTo: { mode: "width", value: plan.width }
   })
     .render()
     .asPng();
@@ -36,7 +33,6 @@ function sheetNode(plan: VisualBriefSheetPlan): ReactNode {
         height: plan.height,
         display: "flex",
         flexDirection: "column",
-        position: "relative",
         overflow: "hidden",
         background: BEIGE,
         color: INK,
@@ -54,119 +50,66 @@ function sheetNode(plan: VisualBriefSheetPlan): ReactNode {
 function CoverSheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
   const [cover, context] = plan.panels;
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <div style={{ display: "flex", position: "relative", height: 760, overflow: "hidden" }}>
-        <EditorialImage src={plan.seedreamImageUrl} />
-        <div
-          style={{
-            display: "flex",
-            position: "absolute",
-            inset: 0,
-            background:
-              "linear-gradient(180deg, rgba(23,33,31,0.14) 0%, rgba(23,33,31,0.1) 44%, rgba(244,232,207,0.98) 100%)"
-          }}
-        />
-        <div style={{ display: "flex", position: "absolute", top: 52, left: 58, right: 58 }}>
-          <Header index={plan.index} inverse />
-        </div>
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", padding: "34px 58px 48px" }}>
+    <Sheet>
+      <Masthead index={plan.index} />
+      <div style={{ display: "flex", flexDirection: "column", padding: "30px 58px 0" }}>
         <Kicker>{cover.kicker}</Kicker>
         <h1 style={coverTitleStyle}>
-          <WrappedLines text={cover.title} maxUnits={17} />
+          <WrappedLines text={cover.title} maxUnits={15} />
         </h1>
-        <div style={{ display: "flex", width: 160, height: 10, marginTop: 22, marginBottom: 28, background: AMBER }} />
+        <Ornament />
         <LeadText lines={cover.body} />
-        <div
-          style={{
-            display: "flex",
-            position: "relative",
-            height: 300,
-            marginTop: 38,
-            overflow: "hidden",
-            background: TEAL
-          }}
-        >
-          <EditorialImage src={plan.accentSeedreamImageUrl ?? plan.seedreamImageUrl} position="center 56%" />
-        </div>
-        <div style={{ display: "flex", marginTop: 36 }}>
-          <EditorialBlock panel={context} index={1} compact />
-        </div>
-        <Footer />
       </div>
-    </div>
+      <EditorialImageFrame src={plan.seedreamImageUrl} height={620} />
+      <div style={{ display: "flex", flexDirection: "column", padding: "38px 58px 0" }}>
+        <EditorialBlock panel={context} index={1} compact />
+      </div>
+      <EditorialImageFrame src={plan.accentSeedreamImageUrl ?? plan.seedreamImageUrl} height={300} position="center 56%" />
+      <SheetFooter />
+    </Sheet>
   );
 }
 
 function AnalysisSheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <div style={{ display: "flex", flexDirection: "column", padding: "56px 58px 34px" }}>
-        <Header index={plan.index} />
-        <div style={{ display: "flex", flexDirection: "column", marginTop: 30 }}>
-          <Kicker>FEATURE STORY</Kicker>
-          <span style={{ ...sectionTitleStyle, marginTop: 10 }}>
-            <WrappedLines text={plan.title} maxUnits={17} />
-          </span>
-        </div>
-      </div>
-      <div style={{ display: "flex", position: "relative", height: 560, overflow: "hidden" }}>
-        <EditorialImage src={plan.seedreamImageUrl} position="center 48%" />
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", padding: "42px 58px 48px" }}>
+    <Sheet>
+      <Masthead index={plan.index} />
+      <SectionIntro kicker="专题拆解" title={plan.title} number="02" />
+      <EditorialImageFrame src={plan.seedreamImageUrl} height={540} position="center 48%" />
+      <div style={{ display: "flex", flexDirection: "column", padding: "26px 58px 0" }}>
         {plan.panels.map((panel, index) => (
           <EditorialBlock key={`${panel.kind}-${index}`} panel={panel} index={index + 1} />
         ))}
-        <Footer />
       </div>
-    </div>
+      <SheetFooter />
+    </Sheet>
   );
 }
 
 function RadarSheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <div style={{ display: "flex", flexDirection: "column", padding: "56px 58px 26px" }}>
-        <Header index={plan.index} />
-        <div style={{ display: "flex", alignItems: "flex-end", marginTop: 42 }}>
-          <span style={{ ...sectionTitleStyle, flexDirection: "column", fontSize: 76 }}>
-            <WrappedLines text={plan.title} maxUnits={10} />
-          </span>
-          <span style={{ display: "flex", marginLeft: "auto", color: AMBER, fontSize: 132, lineHeight: 0.82 }}>
-            03
-          </span>
-        </div>
-      </div>
-      <div style={{ display: "flex", height: 390, overflow: "hidden", borderTop: `12px solid ${TEAL}` }}>
-        <EditorialImage src={plan.seedreamImageUrl} position="center 58%" />
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", padding: "40px 58px 48px" }}>
+    <Sheet>
+      <Masthead index={plan.index} />
+      <SectionIntro kicker="信号雷达" title={plan.title} number="03" />
+      <EditorialImageFrame src={plan.seedreamImageUrl} height={420} position="center 58%" />
+      <div style={{ display: "flex", flexDirection: "column", padding: "26px 58px 0" }}>
         {plan.panels.map((panel, index) => (
           <EditorialBlock key={`${panel.kind}-${index}`} panel={panel} index={index + 1} radar />
         ))}
-        <Footer />
       </div>
-    </div>
+      <SheetFooter />
+    </Sheet>
   );
 }
 
 function TakeawaySheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
   const [takeaway, footer] = plan.panels;
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <div style={{ display: "flex", flexDirection: "column", padding: "56px 58px 34px" }}>
-        <Header index={plan.index} />
-        <div style={{ display: "flex", flexDirection: "column", marginTop: 30 }}>
-          <Kicker>EXECUTIVE TAKEAWAY</Kicker>
-          <span style={{ ...sectionTitleStyle, marginTop: 10 }}>
-            <WrappedLines text={takeaway.title} maxUnits={17} />
-          </span>
-        </div>
-      </div>
-      <div style={{ display: "flex", position: "relative", height: 560, overflow: "hidden" }}>
-        <EditorialImage src={plan.seedreamImageUrl} position="center 52%" />
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", padding: "40px 58px 48px" }}>
+    <Sheet>
+      <Masthead index={plan.index} />
+      <SectionIntro kicker="落地判断" title={takeaway.title} number="04" />
+      <EditorialImageFrame src={plan.seedreamImageUrl} height={540} position="center 52%" />
+      <div style={{ display: "flex", flexDirection: "column", padding: "34px 58px 0" }}>
         <LeadText lines={takeaway.body} />
         <div
           style={{
@@ -175,22 +118,97 @@ function TakeawaySheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
             marginTop: 40,
             padding: "30px 34px",
             borderLeft: `12px solid ${AMBER}`,
+            borderTop: `2px solid ${INK}`,
             background: PAPER
           }}
         >
           <Kicker>{footer.kicker}</Kicker>
           <span style={{ ...sectionTitleStyle, flexDirection: "column", marginTop: 12, fontSize: 44 }}>
-            <WrappedLines text={footer.title} maxUnits={19} />
+            <WrappedLines text={footer.title} maxUnits={17} />
           </span>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 20 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 20, paddingRight: 24 }}>
             {footer.body.map((line, index) => (
-              <p key={index} style={{ ...bodyStyle, display: "flex", flexDirection: "column" }}>
-                <WrappedLines text={line} maxUnits={31} />
-              </p>
+              <BodyCopy key={index} text={line} maxUnits={27} />
             ))}
           </div>
         </div>
-        <Footer />
+      </div>
+      <SheetFooter />
+    </Sheet>
+  );
+}
+
+function Sheet({ children }: { children: ReactNode }): ReactNode {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      {children}
+    </div>
+  );
+}
+
+function Masthead({ index }: { index: number }): ReactNode {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", padding: "44px 58px 0" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          width: "100%",
+          paddingBottom: 14,
+          borderBottom: `2px solid ${INK}`
+        }}
+      >
+        <span style={{ display: "flex", color: TEAL, fontSize: 23, fontWeight: 700 }}>
+          ENTERPRISE AI VISUAL BRIEF
+        </span>
+        <span style={{ display: "flex", marginLeft: "auto", color: "rgba(23,33,31,0.62)", fontSize: 21 }}>
+          {String(index).padStart(2, "0")} / 04
+        </span>
+      </div>
+      <Ornament compact />
+    </div>
+  );
+}
+
+function SectionIntro({ kicker, title, number }: { kicker: string; title: string; number: string }): ReactNode {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", padding: "28px 58px 24px" }}>
+      <Kicker>{kicker}</Kicker>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 22, marginTop: 8 }}>
+        <span style={{ ...sectionTitleStyle, flexDirection: "column", width: 760, fontSize: 74 }}>
+          <WrappedLines text={title} maxUnits={10} />
+        </span>
+        <span style={{ display: "flex", marginLeft: "auto", color: AMBER, fontFamily: "Noto Serif SC", fontSize: 130, lineHeight: 0.86 }}>
+          {number}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function EditorialImageFrame({
+  src,
+  height,
+  position = "center center"
+}: {
+  src: string;
+  height: number;
+  position?: string;
+}): ReactNode {
+  return (
+    <div
+      style={{
+        display: "flex",
+        width: 964,
+        height,
+        margin: "18px 58px 0",
+        padding: 10,
+        border: `2px solid ${INK}`,
+        background: PAPER
+      }}
+    >
+      <div style={{ display: "flex", width: "100%", height: "100%", overflow: "hidden" }}>
+        <EditorialImage src={src} position={position} />
       </div>
     </div>
   );
@@ -207,39 +225,38 @@ function EditorialBlock({
   compact?: boolean;
   radar?: boolean;
 }): ReactNode {
+  const contentWidth = radar ? 812 : compact ? 848 : 830;
   return (
     <div
       style={{
         display: "flex",
-        position: "relative",
-        padding: compact ? "0 0 8px" : "34px 0 38px",
+        gap: 18,
+        padding: compact ? "0 0 14px" : "30px 0 34px",
         borderTop: compact ? "0 solid transparent" : "2px solid rgba(23,33,31,0.2)"
       }}
     >
       <div
         style={{
           display: "flex",
-          width: radar ? 116 : 98,
+          width: radar ? 110 : 88,
           flexShrink: 0,
           color: AMBER,
           fontFamily: "Noto Serif SC",
-          fontSize: radar ? 80 : 68,
+          fontSize: radar ? 78 : 66,
           lineHeight: 0.92,
           fontWeight: 700
         }}
       >
         {String(index).padStart(2, "0")}
       </div>
-      <div style={{ display: "flex", minWidth: 0, flexDirection: "column" }}>
+      <div style={{ display: "flex", width: contentWidth, flexShrink: 0, flexDirection: "column", paddingRight: 24 }}>
         <Kicker>{panel.kicker}</Kicker>
-        <span style={{ ...sectionTitleStyle, flexDirection: "column", marginTop: 10, fontSize: compact ? 45 : 49 }}>
-          <WrappedLines text={panel.title} maxUnits={compact ? 18 : 16} />
+        <span style={{ ...sectionTitleStyle, flexDirection: "column", marginTop: 9, fontSize: compact ? 43 : 47 }}>
+          <WrappedLines text={panel.title} maxUnits={radar ? 14 : compact ? 16 : 15} />
         </span>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 18 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 16 }}>
           {panel.body.map((line, bodyIndex) => (
-            <p key={bodyIndex} style={{ ...bodyStyle, display: "flex", flexDirection: "column" }}>
-              <WrappedLines text={line} maxUnits={29} />
-            </p>
+            <BodyCopy key={bodyIndex} text={line} maxUnits={radar ? 25 : 26} />
           ))}
         </div>
       </div>
@@ -253,17 +270,24 @@ function LeadText({ lines }: { lines: string[] }): ReactNode {
       style={{
         display: "flex",
         flexDirection: "column",
-        gap: 14,
-        paddingLeft: 26,
+        gap: 12,
+        paddingLeft: 24,
+        paddingRight: 24,
         borderLeft: `10px solid ${TEAL}`
       }}
     >
       {lines.map((line, index) => (
-        <p key={index} style={{ ...bodyStyle, display: "flex", flexDirection: "column", fontSize: 34, lineHeight: 1.52 }}>
-          <WrappedLines text={line} maxUnits={27} />
-        </p>
+        <BodyCopy key={index} text={line} maxUnits={26} large />
       ))}
     </div>
+  );
+}
+
+function BodyCopy({ text, maxUnits, large = false }: { text: string; maxUnits: number; large?: boolean }): ReactNode {
+  return (
+    <p style={{ ...bodyStyle, display: "flex", flexDirection: "column", fontSize: large ? 33 : 28 }}>
+      <WrappedLines text={text} maxUnits={maxUnits} />
+    </p>
   );
 }
 
@@ -279,53 +303,42 @@ function WrappedLines({ text, maxUnits }: { text: string; maxUnits: number }): R
   );
 }
 
-function EditorialImage({ src, position = "center center" }: { src: string; position?: string }): ReactNode {
+function EditorialImage({ src, position }: { src: string; position: string }): ReactNode {
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: position }} />
   );
 }
 
-function Header({ index, inverse = false }: { index: number; inverse?: boolean }): ReactNode {
+function Ornament({ compact = false }: { compact?: boolean }): ReactNode {
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        width: "100%",
-        paddingBottom: 16,
-        borderBottom: `2px solid ${inverse ? "rgba(255,253,248,0.62)" : "rgba(23,33,31,0.22)"}`
-      }}
-    >
-      <span style={{ display: "flex", color: inverse ? PAPER : TEAL, fontSize: 24, fontWeight: 700 }}>
-        ENTERPRISE AI VISUAL BRIEF
-      </span>
-      <span style={{ display: "flex", marginLeft: "auto", color: inverse ? PAPER : "rgba(23,33,31,0.62)", fontSize: 22 }}>
-        {String(index).padStart(2, "0")} / 04
-      </span>
+    <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: compact ? 10 : 20, marginBottom: compact ? 0 : 24 }}>
+      <span style={{ display: "flex", width: compact ? 82 : 132, height: 8, background: AMBER }} />
+      <span style={{ display: "flex", width: 18, height: 18, border: `3px solid ${TEAL}` }} />
+      <span style={{ display: "flex", width: compact ? 210 : 330, height: 3, background: TEAL }} />
     </div>
   );
 }
 
 function Kicker({ children }: { children: ReactNode }): ReactNode {
   return (
-    <span style={{ display: "flex", color: TEAL, fontSize: 23, fontWeight: 700 }}>
+    <span style={{ display: "flex", color: TEAL, fontSize: 22, fontWeight: 700 }}>
       {children}
     </span>
   );
 }
 
-function Footer(): ReactNode {
+function SheetFooter(): ReactNode {
   return (
     <div
       style={{
         display: "flex",
         justifyContent: "space-between",
-        marginTop: "auto",
-        paddingTop: 22,
+        margin: "auto 58px 42px",
+        paddingTop: 18,
         borderTop: "2px solid rgba(23,33,31,0.2)",
         color: "rgba(23,33,31,0.56)",
-        fontSize: 19
+        fontSize: 18
       }}
     >
       <span>BEIGE / TEAL / AMBER</span>
@@ -337,11 +350,11 @@ function Footer(): ReactNode {
 const coverTitleStyle = {
   display: "flex",
   flexDirection: "column",
-  margin: 0,
+  margin: "8px 0 0",
   maxWidth: 900,
   color: INK,
   fontFamily: "Noto Serif SC",
-  fontSize: 86,
+  fontSize: 84,
   lineHeight: 1.08,
   letterSpacing: 0,
   fontWeight: 700
@@ -351,7 +364,7 @@ const sectionTitleStyle = {
   display: "flex",
   color: INK,
   fontFamily: "Noto Serif SC",
-  fontSize: 60,
+  fontSize: 58,
   lineHeight: 1.18,
   letterSpacing: 0,
   fontWeight: 700
@@ -360,6 +373,5 @@ const sectionTitleStyle = {
 const bodyStyle = {
   margin: 0,
   color: "rgba(23,33,31,0.86)",
-  fontSize: 29,
-  lineHeight: 1.52
+  lineHeight: 1.56
 };

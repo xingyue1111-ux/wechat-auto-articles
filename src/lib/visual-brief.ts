@@ -40,13 +40,14 @@ export function normalizeVisualBrief(raw: string, context: BriefContext): Visual
     if (!parsed.title || !hasRequiredPanelOrder(panels)) {
       return buildFallbackVisualBrief(context);
     }
+    const fallback = buildFallbackVisualBrief(context);
 
     return {
       date: context.date,
-      title: String(parsed.title),
-      subtitle: String(parsed.subtitle ?? "企业 AI 落地决策简报"),
+      title: chineseOrFallback(String(parsed.title), fallback.title),
+      subtitle: chineseOrFallback(String(parsed.subtitle ?? ""), fallback.subtitle),
       sourceWindow: context.sourceWindow,
-      panels: panels as VisualBriefPanelDraft[]
+      panels: panels.map((panel, index) => ensureReaderFacingChinese(panel, fallback.panels[index]))
     };
   } catch {
     return buildFallbackVisualBrief(context);
@@ -58,6 +59,8 @@ export function buildFallbackVisualBrief(context: BriefContext): VisualBriefDraf
   const radar = [itemAt(context.items, 1), itemAt(context.items, 2), itemAt(context.items, 3)];
   const allUrls = context.items.map((item) => item.url).filter(Boolean).slice(0, 8);
   const windowLabel = context.sourceWindow === "24h" ? "过去 24 小时" : "最近 7 天";
+  const mainTitle = chineseOrFallback(main.title, "企业 AI 工具正在改变成本与交付方式");
+  const mainSummary = chineseOrFallback(main.summary, "这条公开信号值得进入今天的企业 AI 趋势观察。");
 
   return {
     date: context.date,
@@ -87,8 +90,8 @@ export function buildFallbackVisualBrief(context: BriefContext): VisualBriefDraf
       {
         kind: "news",
         kicker: "主线 01",
-        title: main.title,
-        body: [main.summary || "这条信号值得进入今天的企业 AI 趋势观察。", "它的价值在于能否改变真实工作方式。"],
+        title: mainTitle,
+        body: [mainSummary, "它的价值在于能否改变真实工作方式。"],
         imagePrompt: promptForNews(main.title, "signal focus"),
         sourceUrls: [main.url]
       },
@@ -111,9 +114,9 @@ export function buildFallbackVisualBrief(context: BriefContext): VisualBriefDraf
       ...radar.map((item, index): VisualBriefPanelDraft => ({
         kind: "news",
         kicker: `雷达 ${String(index + 1).padStart(2, "0")}`,
-        title: item.title,
+        title: chineseOrFallback(item.title, `雷达信号 ${String(index + 1).padStart(2, "0")}：企业 AI 出现新动态`),
         body: [
-          item.summary || "这条信号值得加入今天的观察清单。",
+          chineseOrFallback(item.summary, "这条信号值得加入今天的观察清单。"),
           "判断重点：它是否会改变团队的流程、权限、成本或验证方式。"
         ],
         imagePrompt: promptForNews(item.title, "enterprise AI radar"),
@@ -226,6 +229,21 @@ function itemAt(items: NormalizedContentItem[], index: number): NormalizedConten
 
 function promptForNews(title: string, subject: string): string {
   return `retrofuturistic vector illustration, ${subject}, ${title}, Beige Teal Amber, editorial infographic, no readable text`;
+}
+
+function ensureReaderFacingChinese(
+  panel: VisualBriefPanelDraft,
+  fallback: VisualBriefPanelDraft
+): VisualBriefPanelDraft {
+  return {
+    ...panel,
+    title: chineseOrFallback(panel.title, fallback.title),
+    body: panel.body.map((line, index) => chineseOrFallback(line, fallback.body[index] ?? "请关注这条企业 AI 落地信号。"))
+  };
+}
+
+function chineseOrFallback(value: string, fallback: string): string {
+  return /[\u3400-\u9fff]/u.test(value) ? value : fallback;
 }
 
 function stripJsonFence(raw: string): string {

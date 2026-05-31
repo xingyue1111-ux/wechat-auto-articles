@@ -121,7 +121,6 @@ export async function fetchAihotWithFallback(
   options: FetchAihotFallbackOptions = {}
 ): Promise<{ sourceWindow: SourceWindow; items: NormalizedContentItem[] }> {
   const now = options.now ?? new Date();
-  const minItems = options.minItems ?? 5;
   const recentItems = await fetchSelectedAihotItems({
     ...options,
     mode: "selected",
@@ -129,18 +128,7 @@ export async function fetchAihotWithFallback(
     since: hoursAgo(now, 24)
   });
 
-  if (recentItems.length >= minItems) {
-    return { sourceWindow: "24h", items: recentItems };
-  }
-
-  const weeklyItems = await fetchSelectedAihotItems({
-    ...options,
-    mode: "selected",
-    take: options.take ?? 50,
-    since: daysAgo(now, 7)
-  });
-
-  return { sourceWindow: "7d", items: weeklyItems };
+  return { sourceWindow: "24h", items: recentItems };
 }
 
 function extractItems(page: AihotPage): AihotRawItem[] {
@@ -213,8 +201,4 @@ function normalizeUrlKey(url: string): string {
 
 function hoursAgo(now: Date, hours: number): string {
   return new Date(now.getTime() - hours * 60 * 60 * 1000).toISOString();
-}
-
-function daysAgo(now: Date, days: number): string {
-  return new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString();
 }

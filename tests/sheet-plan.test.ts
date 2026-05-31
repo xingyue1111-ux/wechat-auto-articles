@@ -45,6 +45,13 @@ describe("visual brief sheet plans", () => {
     ]);
   });
 
+  it("splits long English tokens before they can overflow the right margin", () => {
+    const lines = wrapVisualText("AgentDoGSuperLongContinuousAlignmentFramework", 10);
+
+    expect(lines.length).toBeGreaterThan(1);
+    expect(lines.every((line) => line.length <= 18)).toBe(true);
+  });
+
   it("allocates more sheet height when a paragraph wraps onto more lines", () => {
     const shortBrief = buildFallbackVisualBrief({
       date: "2026-05-30",

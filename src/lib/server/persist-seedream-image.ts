@@ -9,7 +9,8 @@ export type PersistedSeedreamImage = {
 export async function persistSeedreamImageForRender(
   date: string,
   index: number,
-  url: string
+  url: string,
+  revision?: string
 ): Promise<PersistedSeedreamImage> {
   if (url.startsWith("data:")) {
     return { assetUrl: url, renderUrl: url };
@@ -22,7 +23,7 @@ export async function persistSeedreamImageForRender(
     }
     const contentType = response.headers.get("content-type") ?? "image/png";
     const body = new Uint8Array(await response.arrayBuffer());
-    const blob = await putPublicBlob(seedreamBlobPath(date, index), body, contentType);
+    const blob = await putPublicBlob(seedreamBlobPath(date, index, revision), body, contentType);
     return {
       assetUrl: blob.url,
       renderUrl: `data:${contentType};base64,${Buffer.from(body).toString("base64")}`

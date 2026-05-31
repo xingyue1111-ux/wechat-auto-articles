@@ -17,6 +17,18 @@ function wrapParagraph(paragraph: string, maxUnits: number, lines: string[]): vo
 
   for (const token of tokens) {
     const tokenUnits = visualUnits(token);
+    if (tokenUnits > maxUnits) {
+      if (current) {
+        lines.push(current.trimEnd());
+        current = "";
+        currentUnits = 0;
+      }
+      const fragments = splitOversizedToken(token, maxUnits);
+      lines.push(...fragments.slice(0, -1));
+      current = fragments.at(-1) ?? "";
+      currentUnits = visualUnits(current);
+      continue;
+    }
     if (current && currentUnits + tokenUnits > maxUnits) {
       lines.push(current.trimEnd());
       current = token.trimStart();
@@ -37,4 +49,23 @@ function wrapParagraph(paragraph: string, maxUnits: number, lines: string[]): vo
 
 function visualUnits(text: string): number {
   return Array.from(text).reduce((units, character) => units + (/[\u0000-\u00ff]/.test(character) ? 0.56 : 1), 0);
+}
+
+function splitOversizedToken(token: string, maxUnits: number): string[] {
+  const fragments: string[] = [];
+  let current = "";
+  let currentUnits = 0;
+
+  for (const character of Array.from(token)) {
+    const characterUnits = visualUnits(character);
+    if (current && currentUnits + characterUnits > maxUnits) {
+      fragments.push(current);
+      current = "";
+      currentUnits = 0;
+    }
+    current += character;
+    currentUnits += characterUnits;
+  }
+  if (current) fragments.push(current);
+  return fragments;
 }

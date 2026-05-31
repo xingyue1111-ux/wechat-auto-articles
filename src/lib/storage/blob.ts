@@ -30,7 +30,8 @@ export async function putPublicBlob(
     access: "public",
     contentType,
     addRandomSuffix: false,
-    allowOverwrite: true
+    allowOverwrite: true,
+    cacheControlMaxAge: 60
   });
 }
 
