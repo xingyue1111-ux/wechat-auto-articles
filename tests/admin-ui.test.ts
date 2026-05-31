@@ -29,4 +29,12 @@ describe("admin generation form", () => {
     expect(source).toContain("GitHub Releases");
     expect(source).toContain('value="5 张"');
   });
+
+  it("shows saved visual briefs as a clickable history list", async () => {
+    const source = await readFile(path.join(process.cwd(), "src", "app", "admin", "page.tsx"), "utf8");
+
+    expect(source).toContain("listArticleManifestSummaries");
+    expect(source).toContain("已保存简报");
+    expect(source).toContain('href={`/article/${article.date}`}');
+  });
 });

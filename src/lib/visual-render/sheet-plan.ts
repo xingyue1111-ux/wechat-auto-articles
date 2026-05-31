@@ -1,4 +1,5 @@
 import type { VisualBriefPanelDraft, VisualPanelKind } from "@/lib/domain/types";
+import { estimateVisualLineCount } from "@/lib/visual-render/typography";
 
 export type VisualBriefSheetPlan = {
   index: number;
@@ -91,16 +92,23 @@ function sheetHeight(
   variant: VisualBriefSheetPlan["variant"],
   panels: VisualBriefPanelDraft[]
 ): number {
-  const lineCount = panels.reduce((total, panel) => total + panel.body.length, 0);
-  const titleUnits = panels.reduce((total, panel) => total + Math.ceil(panel.title.length / 18), 0);
+  const bodyLineCount = panels.reduce(
+    (total, panel) =>
+      total + panel.body.reduce((lineTotal, line) => lineTotal + estimateVisualLineCount(line, 29), 0),
+    0
+  );
+  const titleLineCount = panels.reduce(
+    (total, panel) => total + estimateVisualLineCount(panel.title, 16),
+    0
+  );
   const heightProfile = {
-    cover: { base: 1550, min: 1750, max: 2500 },
-    analysis: { base: 1400, min: 1750, max: 3000 },
-    radar: { base: 1350, min: 1700, max: 3000 },
-    takeaway: { base: 1060, min: 1380, max: 2400 }
+    cover: { base: 1700, min: 2100, max: 4600 },
+    analysis: { base: 1500, min: 2200, max: 6000 },
+    radar: { base: 1380, min: 2200, max: 6000 },
+    takeaway: { base: 1300, min: 1800, max: 4000 }
   }[variant];
   return clamp(
-    heightProfile.base + lineCount * 48 + titleUnits * 32,
+    heightProfile.base + bodyLineCount * 52 + titleLineCount * 62,
     heightProfile.min,
     heightProfile.max
   );

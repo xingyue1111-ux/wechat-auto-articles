@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildFallbackVisualBrief } from "@/lib/visual-brief";
 import { buildVisualBriefSheetPlans } from "@/lib/visual-render/sheet-plan";
+import { wrapVisualText } from "@/lib/visual-render/typography";
 
 describe("visual brief sheet plans", () => {
   it("combines ten editorial panels into four long-image sheets", () => {
@@ -34,5 +35,28 @@ describe("visual brief sheet plans", () => {
       "radar",
       "takeaway"
     ]);
+  });
+
+  it("wraps continuous Chinese text before it can overflow the sheet width", () => {
+    expect(wrapVisualText("企业人工智能落地信号持续增长", 6)).toEqual([
+      "企业人工智能",
+      "落地信号持续",
+      "增长"
+    ]);
+  });
+
+  it("allocates more sheet height when a paragraph wraps onto more lines", () => {
+    const shortBrief = buildFallbackVisualBrief({
+      date: "2026-05-30",
+      sourceWindow: "24h",
+      items: []
+    });
+    const longBrief = structuredClone(shortBrief);
+    longBrief.panels[2].body = ["企业人工智能落地需要持续验证。".repeat(60)];
+
+    const shortSheet = buildVisualBriefSheetPlans(shortBrief.panels, ["image"])[1];
+    const longSheet = buildVisualBriefSheetPlans(longBrief.panels, ["image"])[1];
+
+    expect(longSheet.height).toBeGreaterThan(shortSheet.height);
   });
 });

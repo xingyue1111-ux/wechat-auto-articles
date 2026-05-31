@@ -1,4 +1,4 @@
-import { get, put } from "@vercel/blob";
+import { get, list, put } from "@vercel/blob";
 import { optionalEnv } from "@/lib/env";
 
 type MemoryBlob = { body: string | Uint8Array; contentType: string; url: string };
@@ -54,4 +54,19 @@ export async function getTextBlob(pathnameOrUrl: string): Promise<string | null>
   } catch {
     return null;
   }
+}
+
+export async function listPublicBlobPathnames(prefix: string): Promise<string[]> {
+  if (!optionalEnv("BLOB_READ_WRITE_TOKEN")) {
+    return Array.from(memoryStore.keys()).filter((pathname) => pathname.startsWith(prefix));
+  }
+
+  const pathnames: string[] = [];
+  let cursor: string | undefined;
+  do {
+    const page = await list({ prefix, cursor, limit: 1000 });
+    pathnames.push(...page.blobs.map((blob) => blob.pathname));
+    cursor = page.hasMore ? page.cursor : undefined;
+  } while (cursor);
+  return pathnames;
 }

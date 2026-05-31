@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { loadVisualFonts } from "@/lib/visual-render/fonts";
 import type { VisualBriefPanelDraft } from "@/lib/domain/types";
 import type { VisualBriefSheetPlan } from "@/lib/visual-render/sheet-plan";
+import { wrapVisualText } from "@/lib/visual-render/typography";
 
 const TEAL = "#0F766E";
 const AMBER = "#D89A2B";
@@ -54,7 +55,7 @@ function CoverSheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
   const [cover, context] = plan.panels;
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <div style={{ display: "flex", position: "relative", height: 950, overflow: "hidden" }}>
+      <div style={{ display: "flex", position: "relative", height: 760, overflow: "hidden" }}>
         <EditorialImage src={plan.seedreamImageUrl} />
         <div
           style={{
@@ -68,22 +69,13 @@ function CoverSheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
         <div style={{ display: "flex", position: "absolute", top: 52, left: 58, right: 58 }}>
           <Header index={plan.index} inverse />
         </div>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            position: "absolute",
-            left: 58,
-            right: 58,
-            bottom: 50
-          }}
-        >
-          <Kicker>{cover.kicker}</Kicker>
-          <h1 style={coverTitleStyle}>{cover.title}</h1>
-          <div style={{ display: "flex", width: 160, height: 10, marginTop: 28, background: AMBER }} />
-        </div>
       </div>
       <div style={{ display: "flex", flexDirection: "column", padding: "34px 58px 48px" }}>
+        <Kicker>{cover.kicker}</Kicker>
+        <h1 style={coverTitleStyle}>
+          <WrappedLines text={cover.title} maxUnits={17} />
+        </h1>
+        <div style={{ display: "flex", width: 160, height: 10, marginTop: 22, marginBottom: 28, background: AMBER }} />
         <LeadText lines={cover.body} />
         <div
           style={{
@@ -96,41 +88,6 @@ function CoverSheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
           }}
         >
           <EditorialImage src={plan.accentSeedreamImageUrl ?? plan.seedreamImageUrl} position="center 56%" />
-          <div
-            style={{
-              display: "flex",
-              position: "absolute",
-              inset: 0,
-              background: "linear-gradient(90deg, rgba(15,118,110,0.88), rgba(15,118,110,0.14))"
-            }}
-          />
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              position: "absolute",
-              left: 38,
-              bottom: 32,
-              width: 610,
-              color: PAPER
-            }}
-          >
-            <span style={{ display: "flex", color: "#F7C768", fontSize: 24, fontWeight: 700 }}>
-              TODAY&apos;S CONTEXT
-            </span>
-            <span
-              style={{
-                display: "flex",
-                marginTop: 12,
-                fontFamily: "Noto Serif SC",
-                fontSize: 46,
-                lineHeight: 1.18,
-                fontWeight: 700
-              }}
-            >
-              {context.title}
-            </span>
-          </div>
         </div>
         <div style={{ display: "flex", marginTop: 36 }}>
           <EditorialBlock panel={context} index={1} compact />
@@ -144,26 +101,17 @@ function CoverSheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
 function AnalysisSheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <div style={{ display: "flex", flexDirection: "column", padding: "56px 58px 28px" }}>
+      <div style={{ display: "flex", flexDirection: "column", padding: "56px 58px 34px" }}>
         <Header index={plan.index} />
-      </div>
-      <div style={{ display: "flex", position: "relative", height: 640, overflow: "hidden" }}>
-        <EditorialImage src={plan.seedreamImageUrl} position="center 48%" />
-        <div
-          style={{
-            display: "flex",
-            position: "absolute",
-            left: 58,
-            bottom: 0,
-            width: 570,
-            padding: "32px 34px 30px",
-            flexDirection: "column",
-            background: "rgba(244,232,207,0.95)"
-          }}
-        >
+        <div style={{ display: "flex", flexDirection: "column", marginTop: 30 }}>
           <Kicker>FEATURE STORY</Kicker>
-          <span style={sectionTitleStyle}>{plan.title}</span>
+          <span style={{ ...sectionTitleStyle, marginTop: 10 }}>
+            <WrappedLines text={plan.title} maxUnits={17} />
+          </span>
         </div>
+      </div>
+      <div style={{ display: "flex", position: "relative", height: 560, overflow: "hidden" }}>
+        <EditorialImage src={plan.seedreamImageUrl} position="center 48%" />
       </div>
       <div style={{ display: "flex", flexDirection: "column", padding: "42px 58px 48px" }}>
         {plan.panels.map((panel, index) => (
@@ -181,7 +129,9 @@ function RadarSheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
       <div style={{ display: "flex", flexDirection: "column", padding: "56px 58px 26px" }}>
         <Header index={plan.index} />
         <div style={{ display: "flex", alignItems: "flex-end", marginTop: 42 }}>
-          <span style={{ ...sectionTitleStyle, fontSize: 76 }}>{plan.title}</span>
+          <span style={{ ...sectionTitleStyle, flexDirection: "column", fontSize: 76 }}>
+            <WrappedLines text={plan.title} maxUnits={10} />
+          </span>
           <span style={{ display: "flex", marginLeft: "auto", color: AMBER, fontSize: 132, lineHeight: 0.82 }}>
             03
           </span>
@@ -204,40 +154,17 @@ function TakeawaySheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
   const [takeaway, footer] = plan.panels;
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <div style={{ display: "flex", flexDirection: "column", padding: "56px 58px 30px" }}>
+      <div style={{ display: "flex", flexDirection: "column", padding: "56px 58px 34px" }}>
         <Header index={plan.index} />
-      </div>
-      <div style={{ display: "flex", position: "relative", height: 650, overflow: "hidden" }}>
-        <EditorialImage src={plan.seedreamImageUrl} position="center 52%" />
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            position: "absolute",
-            left: 58,
-            right: 58,
-            bottom: 0,
-            padding: "28px 34px 34px",
-            color: PAPER,
-            background: "rgba(15,118,110,0.93)"
-          }}
-        >
-          <span style={{ display: "flex", color: "#F7C768", fontSize: 24, fontWeight: 700 }}>
-            EXECUTIVE TAKEAWAY
-          </span>
-          <span
-            style={{
-              display: "flex",
-              marginTop: 10,
-              fontFamily: "Noto Serif SC",
-              fontSize: 58,
-              lineHeight: 1.16,
-              fontWeight: 700
-            }}
-          >
-            {takeaway.title}
+        <div style={{ display: "flex", flexDirection: "column", marginTop: 30 }}>
+          <Kicker>EXECUTIVE TAKEAWAY</Kicker>
+          <span style={{ ...sectionTitleStyle, marginTop: 10 }}>
+            <WrappedLines text={takeaway.title} maxUnits={17} />
           </span>
         </div>
+      </div>
+      <div style={{ display: "flex", position: "relative", height: 560, overflow: "hidden" }}>
+        <EditorialImage src={plan.seedreamImageUrl} position="center 52%" />
       </div>
       <div style={{ display: "flex", flexDirection: "column", padding: "40px 58px 48px" }}>
         <LeadText lines={takeaway.body} />
@@ -252,11 +179,13 @@ function TakeawaySheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
           }}
         >
           <Kicker>{footer.kicker}</Kicker>
-          <span style={{ ...sectionTitleStyle, marginTop: 12, fontSize: 44 }}>{footer.title}</span>
+          <span style={{ ...sectionTitleStyle, flexDirection: "column", marginTop: 12, fontSize: 44 }}>
+            <WrappedLines text={footer.title} maxUnits={19} />
+          </span>
           <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 20 }}>
             {footer.body.map((line, index) => (
-              <p key={index} style={bodyStyle}>
-                {line}
+              <p key={index} style={{ ...bodyStyle, display: "flex", flexDirection: "column" }}>
+                <WrappedLines text={line} maxUnits={31} />
               </p>
             ))}
           </div>
@@ -303,13 +232,13 @@ function EditorialBlock({
       </div>
       <div style={{ display: "flex", minWidth: 0, flexDirection: "column" }}>
         <Kicker>{panel.kicker}</Kicker>
-        <span style={{ ...sectionTitleStyle, marginTop: 10, fontSize: compact ? 45 : 49 }}>
-          {panel.title}
+        <span style={{ ...sectionTitleStyle, flexDirection: "column", marginTop: 10, fontSize: compact ? 45 : 49 }}>
+          <WrappedLines text={panel.title} maxUnits={compact ? 18 : 16} />
         </span>
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 18 }}>
           {panel.body.map((line, bodyIndex) => (
-            <p key={bodyIndex} style={bodyStyle}>
-              {line}
+            <p key={bodyIndex} style={{ ...bodyStyle, display: "flex", flexDirection: "column" }}>
+              <WrappedLines text={line} maxUnits={29} />
             </p>
           ))}
         </div>
@@ -330,11 +259,23 @@ function LeadText({ lines }: { lines: string[] }): ReactNode {
       }}
     >
       {lines.map((line, index) => (
-        <p key={index} style={{ ...bodyStyle, fontSize: 34, lineHeight: 1.52 }}>
-          {line}
+        <p key={index} style={{ ...bodyStyle, display: "flex", flexDirection: "column", fontSize: 34, lineHeight: 1.52 }}>
+          <WrappedLines text={line} maxUnits={27} />
         </p>
       ))}
     </div>
+  );
+}
+
+function WrappedLines({ text, maxUnits }: { text: string; maxUnits: number }): ReactNode {
+  return (
+    <span style={{ display: "flex", flexDirection: "column" }}>
+      {wrapVisualText(text, maxUnits).map((line, index) => (
+        <span key={`${line}-${index}`} style={{ display: "flex" }}>
+          {line}
+        </span>
+      ))}
+    </span>
   );
 }
 
@@ -394,15 +335,17 @@ function Footer(): ReactNode {
 }
 
 const coverTitleStyle = {
+  display: "flex",
+  flexDirection: "column",
   margin: 0,
   maxWidth: 900,
-  color: PAPER,
+  color: INK,
   fontFamily: "Noto Serif SC",
   fontSize: 86,
   lineHeight: 1.08,
   letterSpacing: 0,
   fontWeight: 700
-};
+} as const;
 
 const sectionTitleStyle = {
   display: "flex",

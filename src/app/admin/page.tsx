@@ -1,5 +1,6 @@
-import { CalendarDays, ImagePlus, Link2, Sparkles } from "lucide-react";
+import { CalendarDays, Eye, ImagePlus, Link2, Sparkles } from "lucide-react";
 import { GenerateBriefForm } from "@/components/generate-brief-form";
+import { listArticleManifestSummaries } from "@/lib/server/visual-manifest";
 
 export const maxDuration = 300;
 
@@ -12,6 +13,8 @@ const PUBLIC_SOURCES = [
 ];
 
 export default async function AdminPage() {
+  const articles = await listArticleManifestSummaries().catch(() => []);
+
   return (
     <main className="page">
       <header className="topbar">
@@ -47,8 +50,27 @@ export default async function AdminPage() {
       </section>
 
       <section className="panel">
-        <h2>历史访问</h2>
-        <p className="muted">生成后可以用 `/latest` 查看最新一期，也可以打开 `/article/YYYY-MM-DD` 查看指定日期。</p>
+        <h2>已保存简报</h2>
+        <p className="muted">每次生成完成后都会保存在 Blob。可以随时回来查看，不需要当场下载。</p>
+        {articles.length ? (
+          <div className="article-history">
+            {articles.map((article) => (
+              <article className="article-history-row" key={`${article.date}-${article.generatedAt}`}>
+                <div>
+                  <strong>{article.date}</strong>
+                  <span>{article.title}</span>
+                  <small>{article.panels.length} 张长图</small>
+                </div>
+                <a className="button secondary compact" href={`/article/${article.date}`}>
+                  <Eye size={16} />
+                  <span>查看</span>
+                </a>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="muted history-empty">还没有已保存的简报。</p>
+        )}
       </section>
     </main>
   );
