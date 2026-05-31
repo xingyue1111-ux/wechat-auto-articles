@@ -37,4 +37,22 @@ describe("admin generation form", () => {
     expect(source).toContain("已保存简报");
     expect(source).toContain('href={`/article/${article.date}`}');
   });
+
+  it("links to the history archive from admin", async () => {
+    const source = await readFile(path.join(process.cwd(), "src", "app", "admin", "page.tsx"), "utf8");
+
+    expect(source).toContain('href="/archive"');
+    expect(source).toContain("历史归档");
+  });
+
+  it("renders archive copy, illustrations, final sheets and sources", async () => {
+    const source = await readFile(path.join(process.cwd(), "src", "components", "archive-page.tsx"), "utf8");
+
+    expect(source).toContain("推文内容");
+    expect(source).toContain("Seedream 原始配图");
+    expect(source).toContain("最终公众号长图");
+    expect(source).toContain("原始信号来源");
+    expect(source).toContain("该历史版本未保存正文");
+    expect(source).toContain("该历史版本未保存原始配图");
+  });
 });

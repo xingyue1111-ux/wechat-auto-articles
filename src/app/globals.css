@@ -51,6 +51,12 @@ input {
   margin-bottom: 28px;
 }
 
+.topbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .eyebrow {
   margin: 0 0 6px;
   color: var(--teal);
@@ -147,6 +153,131 @@ h2 {
 
 .history-empty {
   margin-bottom: 0;
+}
+
+.archive-page {
+  min-height: 100dvh;
+  padding: 42px 20px 72px;
+}
+
+.archive-header,
+.archive-list,
+.archive-empty-state {
+  width: min(1180px, 100%);
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.archive-header,
+.archive-card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.archive-list {
+  display: grid;
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.archive-empty-state {
+  margin-top: 28px;
+}
+
+.archive-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 22px;
+  background: var(--surface);
+}
+
+.archive-card h2 {
+  margin: 8px 0 6px;
+}
+
+.archive-card small,
+.archive-card time {
+  color: var(--muted);
+}
+
+.archive-copy {
+  margin-top: 18px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.archive-copy summary {
+  cursor: pointer;
+  color: var(--teal);
+  font-weight: 700;
+}
+
+.archive-copy-body {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.archive-copy-body section {
+  border-left: 3px solid var(--amber);
+  padding-left: 14px;
+}
+
+.archive-copy-body h3 {
+  margin: 5px 0 8px;
+}
+
+.archive-copy-body p {
+  margin-bottom: 6px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.archive-empty {
+  margin: 12px 0 0;
+}
+
+.archive-gallery-section,
+.archive-sources {
+  margin-top: 20px;
+}
+
+.archive-gallery {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.archive-gallery img {
+  width: 168px;
+  height: 210px;
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  object-fit: cover;
+  object-position: top;
+}
+
+.archive-sources {
+  display: grid;
+  gap: 6px;
+}
+
+.archive-sources a {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  color: var(--teal);
+  font-size: 13px;
+}
+
+.archive-sources span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .source-strip {
@@ -416,6 +547,11 @@ button:disabled {
 
   .topbar {
     align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .archive-header,
+  .archive-card-heading {
     flex-direction: column;
   }
 

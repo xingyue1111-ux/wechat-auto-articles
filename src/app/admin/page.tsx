@@ -23,10 +23,16 @@ export default async function AdminPage() {
           <h1>长图简报生成台</h1>
           <p className="muted">聚合五路公开信号，生成面向企业 AI 落地负责人的复古未来主义长图简报。</p>
         </div>
-        <a className="button secondary" href="/latest" aria-label="查看最新长图简报">
-          <Link2 size={18} />
-          <span style={{ marginLeft: 8 }}>查看 latest</span>
-        </a>
+        <div className="topbar-actions">
+          <a className="button secondary" href="/archive">
+            <Eye size={18} />
+            <span style={{ marginLeft: 8 }}>历史归档</span>
+          </a>
+          <a className="button secondary" href="/latest" aria-label="查看最新长图简报">
+            <Link2 size={18} />
+            <span style={{ marginLeft: 8 }}>查看 latest</span>
+          </a>
+        </div>
       </header>
 
       <section className="grid" aria-label="生成能力">
