@@ -1,24 +1,14 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 import { Resvg } from "@resvg/resvg-js";
 import satori from "satori";
 import type { ReactNode } from "react";
+import { loadVisualFonts } from "@/lib/visual-render/fonts";
 import type { PanelRenderPlan } from "@/lib/visual-render/render-plan";
-
-let fontCache: ArrayBuffer | null = null;
 
 export async function renderPanelPng(plan: PanelRenderPlan): Promise<Uint8Array> {
   const svg = await satori(panelNode(plan), {
     width: plan.width,
     height: plan.height,
-    fonts: [
-      {
-        name: "Noto Sans SC",
-        data: await loadFont(),
-        weight: 400,
-        style: "normal"
-      }
-    ]
+    fonts: await loadVisualFonts()
   });
   const png = new Resvg(svg, {
     fitTo: {
@@ -223,20 +213,4 @@ function panelNode(plan: PanelRenderPlan): ReactNode {
       </div>
     </div>
   );
-}
-
-async function loadFont(): Promise<ArrayBuffer> {
-  if (!fontCache) {
-    const fontPath = path.join(
-      process.cwd(),
-      "node_modules",
-      "@fontsource",
-      "noto-sans-sc",
-      "files",
-      "noto-sans-sc-113-400-normal.woff"
-    );
-    const data = await readFile(fontPath);
-    fontCache = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
-  }
-  return fontCache;
 }

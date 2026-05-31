@@ -12,7 +12,10 @@ describe("visual brief sheet plans", () => {
 
     const sheets = buildVisualBriefSheetPlans(brief.panels, [
       "data:image/png;base64,cover",
-      "data:image/png;base64,body"
+      "data:image/png;base64,context",
+      "data:image/png;base64,main",
+      "data:image/png;base64,radar",
+      "data:image/png;base64,takeaway"
     ]);
 
     expect(sheets).toHaveLength(4);
@@ -20,9 +23,16 @@ describe("visual brief sheet plans", () => {
     expect(sheets.map((sheet) => sheet.kind)).toEqual(["cover", "news", "news", "takeaway"]);
     expect(sheets.map((sheet) => sheet.seedreamImageUrl)).toEqual([
       "data:image/png;base64,cover",
-      "data:image/png;base64,body",
-      "data:image/png;base64,body",
-      "data:image/png;base64,body"
+      "data:image/png;base64,main",
+      "data:image/png;base64,radar",
+      "data:image/png;base64,takeaway"
+    ]);
+    expect(sheets[0].accentSeedreamImageUrl).toBe("data:image/png;base64,context");
+    expect(sheets.map((sheet) => sheet.variant)).toEqual([
+      "cover",
+      "analysis",
+      "radar",
+      "takeaway"
     ]);
   });
 });
