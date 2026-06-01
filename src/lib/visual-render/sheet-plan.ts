@@ -9,7 +9,6 @@ export type VisualBriefSheetPlan = {
   width: 1080;
   height: number;
   seedreamImageUrl: string;
-  accentSeedreamImageUrl?: string;
   panels: VisualBriefPanelDraft[];
   theme: {
     background: "#F4E8CF";
@@ -23,36 +22,34 @@ const SHEET_GROUPS: Array<{
   title: string;
   panelIndexes: number[];
   illustrationIndex: number;
-  accentIllustrationIndex?: number;
 }> = [
   {
     kind: "cover",
     variant: "cover",
     title: "封面与今日脉络",
     panelIndexes: [0, 1],
-    illustrationIndex: 0,
-    accentIllustrationIndex: 1
+    illustrationIndex: 0
   },
   {
     kind: "news",
     variant: "analysis",
     title: "主线拆解",
     panelIndexes: [2, 3, 4],
-    illustrationIndex: 2
+    illustrationIndex: 1
   },
   {
     kind: "news",
     variant: "radar",
     title: "雷达信号",
     panelIndexes: [5, 6, 7],
-    illustrationIndex: 3
+    illustrationIndex: 2
   },
   {
     kind: "takeaway",
     variant: "takeaway",
     title: "落地判断",
     panelIndexes: [8, 9],
-    illustrationIndex: 4
+    illustrationIndex: 3
   }
 ];
 
@@ -75,10 +72,6 @@ export function buildVisualBriefSheetPlans(
       width: 1080,
       height: sheetHeight(group.variant, groupedPanels),
       seedreamImageUrl: illustrationUrls[group.illustrationIndex] ?? fallbackIllustration,
-      accentSeedreamImageUrl:
-        group.accentIllustrationIndex === undefined
-          ? undefined
-          : illustrationUrls[group.accentIllustrationIndex] ?? fallbackIllustration,
       panels: groupedPanels,
       theme: {
         background: "#F4E8CF",

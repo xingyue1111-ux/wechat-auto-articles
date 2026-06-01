@@ -37,7 +37,7 @@ export default async function AdminPage() {
 
       <section className="grid" aria-label="生成能力">
         <Metric icon={<Sparkles size={20} />} label="公开信号源" value="5 路" />
-        <Metric icon={<ImagePlus size={20} />} label="Seedream 配图" value="5 张" />
+        <Metric icon={<ImagePlus size={20} />} label="Seedream 配图" value="4 张" />
         <Metric icon={<CalendarDays size={20} />} label="定时任务" value="19:00" />
         <Metric icon={<Link2 size={20} />} label="保存位置" value="Blob" />
       </section>

@@ -13,7 +13,6 @@ describe("visual brief sheet plans", () => {
 
     const sheets = buildVisualBriefSheetPlans(brief.panels, [
       "data:image/png;base64,cover",
-      "data:image/png;base64,context",
       "data:image/png;base64,main",
       "data:image/png;base64,radar",
       "data:image/png;base64,takeaway"
@@ -28,7 +27,7 @@ describe("visual brief sheet plans", () => {
       "data:image/png;base64,radar",
       "data:image/png;base64,takeaway"
     ]);
-    expect(sheets[0].accentSeedreamImageUrl).toBe("data:image/png;base64,context");
+    expect(sheets[0].accentSeedreamImageUrl).toBeUndefined();
     expect(sheets.map((sheet) => sheet.variant)).toEqual([
       "cover",
       "analysis",

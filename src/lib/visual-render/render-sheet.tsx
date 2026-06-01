@@ -64,7 +64,6 @@ function CoverSheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
       <div style={{ display: "flex", flexDirection: "column", padding: "38px 58px 0" }}>
         <EditorialBlock panel={context} index={1} compact />
       </div>
-      <EditorialImageFrame src={plan.accentSeedreamImageUrl ?? plan.seedreamImageUrl} height={424} position="center 56%" />
       <SheetFooter />
     </Sheet>
   );

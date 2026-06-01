@@ -5,14 +5,13 @@ import {
 } from "@/lib/visual-render/illustrations";
 
 describe("visual brief illustration allocation", () => {
-  it("uses five Seedream illustrations for the fixed ten-panel brief", () => {
+  it("uses four Seedream illustrations for the four long-image sheets", () => {
     const prompts = Array.from({ length: 10 }, (_, index) => `prompt-${index + 1}`);
     const selected = selectIllustrationPrompts(prompts);
 
     expect(selected.map((prompt) => prompt.split(",")[0])).toEqual([
       "prompt-1",
       "prompt-3",
-      "prompt-5",
       "prompt-7",
       "prompt-9"
     ]);

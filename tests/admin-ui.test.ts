@@ -27,7 +27,7 @@ describe("admin generation form", () => {
     expect(source).toContain("Hugging Face Daily Papers");
     expect(source).toContain("arXiv RSS");
     expect(source).toContain("GitHub Releases");
-    expect(source).toContain('value="5 张"');
+    expect(source).toContain('value="4 张"');
   });
 
   it("shows saved visual briefs as a clickable history list", async () => {
