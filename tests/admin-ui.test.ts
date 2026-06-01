@@ -36,6 +36,7 @@ describe("admin generation form", () => {
     expect(source).toContain("listArticleManifestSummaries");
     expect(source).toContain("已保存简报");
     expect(source).toContain('href={`/article/${article.date}`}');
+    expect(source).toContain("article-history-cover");
   });
 
   it("links to the history archive from admin", async () => {
@@ -48,6 +49,7 @@ describe("admin generation form", () => {
   it("renders archive copy, illustrations, final sheets and sources", async () => {
     const source = await readFile(path.join(process.cwd(), "src", "components", "archive-page.tsx"), "utf8");
 
+    expect(source).toContain("archive-card-cover");
     expect(source).toContain("推文内容");
     expect(source).toContain("Seedream 原始配图");
     expect(source).toContain("最终公众号长图");

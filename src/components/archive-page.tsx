@@ -32,6 +32,10 @@ export function ArchivePage({ articles }: { articles: VisualBriefManifest[] }) {
                   <span>查看长图</span>
                 </a>
               </div>
+              {coverImageUrl(article) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img className="archive-card-cover" src={coverImageUrl(article)} alt="" loading="lazy" />
+              ) : null}
 
               <details className="archive-copy">
                 <summary>查看推文内容</summary>
@@ -61,6 +65,10 @@ export function ArchivePage({ articles }: { articles: VisualBriefManifest[] }) {
       ) : <p className="archive-empty-state muted">还没有已保存的简报。</p>}
     </main>
   );
+}
+
+function coverImageUrl(article: VisualBriefManifest): string | undefined {
+  return article.coverImageUrl ?? article.illustrations?.[0]?.imageUrl ?? article.panels[0]?.imageUrl;
 }
 
 function Gallery({ title, images, empty }: { title: string; images: string[]; empty?: string }) {

@@ -60,11 +60,11 @@ function CoverSheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
         <Ornament />
         <LeadText lines={cover.body} />
       </div>
-      <EditorialImageFrame src={plan.seedreamImageUrl} height={620} />
+      <EditorialImageFrame src={plan.seedreamImageUrl} height={424} />
       <div style={{ display: "flex", flexDirection: "column", padding: "38px 58px 0" }}>
         <EditorialBlock panel={context} index={1} compact />
       </div>
-      <EditorialImageFrame src={plan.accentSeedreamImageUrl ?? plan.seedreamImageUrl} height={300} position="center 56%" />
+      <EditorialImageFrame src={plan.accentSeedreamImageUrl ?? plan.seedreamImageUrl} height={424} position="center 56%" />
       <SheetFooter />
     </Sheet>
   );
@@ -75,7 +75,7 @@ function AnalysisSheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
     <Sheet>
       <Masthead index={plan.index} />
       <SectionIntro kicker="专题拆解" title={plan.title} number="02" />
-      <EditorialImageFrame src={plan.seedreamImageUrl} height={540} position="center 48%" />
+      <EditorialImageFrame src={plan.seedreamImageUrl} height={424} position="center 48%" />
       <div style={{ display: "flex", flexDirection: "column", padding: "26px 58px 0" }}>
         {plan.panels.map((panel, index) => (
           <EditorialBlock key={`${panel.kind}-${index}`} panel={panel} index={index + 1} />
@@ -91,7 +91,7 @@ function RadarSheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
     <Sheet>
       <Masthead index={plan.index} />
       <SectionIntro kicker="信号雷达" title={plan.title} number="03" />
-      <EditorialImageFrame src={plan.seedreamImageUrl} height={420} position="center 58%" />
+      <EditorialImageFrame src={plan.seedreamImageUrl} height={424} position="center 58%" />
       <div style={{ display: "flex", flexDirection: "column", padding: "26px 58px 0" }}>
         {plan.panels.map((panel, index) => (
           <EditorialBlock key={`${panel.kind}-${index}`} panel={panel} index={index + 1} radar />
@@ -108,7 +108,7 @@ function TakeawaySheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
     <Sheet>
       <Masthead index={plan.index} />
       <SectionIntro kicker="落地判断" title={takeaway.title} number="04" />
-      <EditorialImageFrame src={plan.seedreamImageUrl} height={540} position="center 52%" />
+      <EditorialImageFrame src={plan.seedreamImageUrl} height={424} position="center 52%" />
       <div style={{ display: "flex", flexDirection: "column", padding: "34px 58px 0" }}>
         <LeadText lines={takeaway.body} />
         <div
@@ -306,7 +306,7 @@ function WrappedLines({ text, maxUnits }: { text: string; maxUnits: number }): R
 function EditorialImage({ src, position }: { src: string; position: string }): ReactNode {
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: position }} />
+    <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: position }} />
   );
 }
 

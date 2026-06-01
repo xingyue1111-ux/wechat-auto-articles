@@ -16,4 +16,25 @@ describe("enterprise AI brief prompt", () => {
     expect(prompt).toContain("标题、摘要和正文必须全部使用简体中文");
     expect(prompt).toContain("即使输入素材是英文，也必须先翻译为简体中文");
   });
+
+  it("passes up to one hundred categorized fresh signals into the editorial prompt", () => {
+    const prompt = buildBriefPrompt(
+      "2026-05-31",
+      "24h",
+      Array.from({ length: 100 }, (_, index) => ({
+        title: `Agent workflow ${index + 1}`,
+        summary: `Summary ${index + 1}`,
+        url: `https://example.com/${index + 1}`,
+        source: index % 2 ? "AI HOT" : "Hacker News",
+        category: "enterprise-ai",
+        publishedAt: "2026-05-31T11:00:00.000Z"
+      }))
+    );
+
+    expect(prompt).toContain('"index": 100');
+    expect(prompt).toContain('"category": "enterprise-ai"');
+    expect(prompt).toContain('"publishedAt": "2026-05-31T11:00:00.000Z"');
+    expect(prompt).toContain("至少 2 个独立来源");
+    expect(prompt).toContain("分类");
+  });
 });

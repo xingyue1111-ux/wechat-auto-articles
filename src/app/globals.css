@@ -129,6 +129,14 @@ h2 {
   padding-top: 12px;
 }
 
+.article-history-cover {
+  width: 148px;
+  aspect-ratio: 2.35 / 1;
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  object-fit: cover;
+}
+
 .article-history-row div {
   display: grid;
   min-width: 0;
@@ -195,6 +203,15 @@ h2 {
 
 .archive-card h2 {
   margin: 8px 0 6px;
+}
+
+.archive-card-cover {
+  display: block;
+  width: min(560px, 100%);
+  aspect-ratio: 2.35 / 1;
+  margin-top: 18px;
+  border: 1px solid var(--line);
+  object-fit: cover;
 }
 
 .archive-card small,
@@ -553,6 +570,11 @@ button:disabled {
   .archive-header,
   .archive-card-heading {
     flex-direction: column;
+  }
+
+  .article-history-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
   }
 
   .console-line {

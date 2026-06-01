@@ -8,7 +8,7 @@ import type {
 } from "@/lib/domain/types";
 import { panelBlobPath } from "@/lib/storage/paths";
 
-type BriefContext = {
+export type BriefContext = {
   date: string;
   sourceWindow: SourceWindow;
   items: NormalizedContentItem[];
@@ -32,25 +32,43 @@ const REQUIRED_MANIFEST_SHEET_KINDS: VisualPanelKind[] = ["cover", "news", "news
 export { panelBlobPath };
 
 export function normalizeVisualBrief(raw: string, context: BriefContext): VisualBriefDraft {
+  return normalizeVisualBriefWithDiagnostics(raw, context).brief;
+}
+
+export function normalizeVisualBriefWithDiagnostics(
+  raw: string,
+  context: BriefContext
+): { brief: VisualBriefDraft; usedFallback: boolean; reason?: string } {
   try {
     const parsed = JSON.parse(stripJsonFence(raw)) as Partial<VisualBriefDraft>;
     const panels = Array.isArray(parsed.panels)
       ? parsed.panels.map(normalizePanel).filter((panel): panel is VisualBriefPanelDraft => panel !== null)
       : [];
     if (!parsed.title || !hasRequiredPanelOrder(panels)) {
-      return buildFallbackVisualBrief(context);
+      return {
+        brief: buildFallbackVisualBrief(context),
+        usedFallback: true,
+        reason: "DeepSeek JSON 缺少标题，或没有严格返回固定 10 屏结构"
+      };
     }
     const fallback = buildFallbackVisualBrief(context);
 
     return {
-      date: context.date,
-      title: chineseOrFallback(String(parsed.title), fallback.title),
-      subtitle: chineseOrFallback(String(parsed.subtitle ?? ""), fallback.subtitle),
-      sourceWindow: context.sourceWindow,
-      panels: panels.map((panel, index) => ensureReaderFacingChinese(panel, fallback.panels[index]))
+      brief: {
+        date: context.date,
+        title: chineseOrFallback(String(parsed.title), fallback.title),
+        subtitle: chineseOrFallback(String(parsed.subtitle ?? ""), fallback.subtitle),
+        sourceWindow: context.sourceWindow,
+        panels: panels.map((panel, index) => ensureReaderFacingChinese(panel, fallback.panels[index]))
+      },
+      usedFallback: false
     };
   } catch {
-    return buildFallbackVisualBrief(context);
+    return {
+      brief: buildFallbackVisualBrief(context),
+      usedFallback: true,
+      reason: "DeepSeek 返回内容不是合法 JSON"
+    };
   }
 }
 
@@ -168,6 +186,39 @@ export function validateVisualBriefManifest(input: unknown): VisualBriefManifest
 }
 
 function hasValidManifestArchive(manifest: VisualBriefManifest): boolean {
+  if (manifest.coverImageUrl !== undefined && (typeof manifest.coverImageUrl !== "string" || !manifest.coverImageUrl)) {
+    return false;
+  }
+  if (manifest.generation !== undefined) {
+    const generation = manifest.generation;
+    if (
+      !generation ||
+      !["deepseek", "fallback"].includes(generation.contentMode) ||
+      typeof generation.deepseekAttempts !== "number" ||
+      typeof generation.candidateCount !== "number" ||
+      !Array.isArray(generation.sourceStats) ||
+      !generation.sourceStats.every((source) =>
+        Boolean(source && typeof source.id === "string" && typeof source.label === "string" && typeof source.count === "number")
+      ) ||
+      !Array.isArray(generation.excludedPreviousUrls) ||
+      !generation.excludedPreviousUrls.every((url) => typeof url === "string") ||
+      !Array.isArray(generation.selectedSourceUrls) ||
+      !generation.selectedSourceUrls.every((url) => typeof url === "string") ||
+      !Array.isArray(generation.candidatePool) ||
+      !generation.candidatePool.every((item) =>
+        Boolean(
+          item &&
+          typeof item.title === "string" &&
+          typeof item.url === "string" &&
+          typeof item.source === "string" &&
+          typeof item.category === "string" &&
+          typeof item.publishedAt === "string"
+        )
+      )
+    ) {
+      return false;
+    }
+  }
   if (manifest.article !== undefined) {
     if (!manifest.article || !Array.isArray(manifest.article.panels)) {
       return false;

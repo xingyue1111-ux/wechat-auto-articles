@@ -62,6 +62,10 @@ export default async function AdminPage() {
           <div className="article-history">
             {articles.map((article) => (
               <article className="article-history-row" key={`${article.date}-${article.generatedAt}`}>
+                {coverImageUrl(article) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img className="article-history-cover" src={coverImageUrl(article)} alt="" loading="lazy" />
+                ) : null}
                 <div>
                   <strong>{article.date}</strong>
                   <span>{article.title}</span>
@@ -80,6 +84,10 @@ export default async function AdminPage() {
       </section>
     </main>
   );
+}
+
+function coverImageUrl(article: Awaited<ReturnType<typeof listArticleManifestSummaries>>[number]): string | undefined {
+  return article.coverImageUrl ?? article.illustrations?.[0]?.imageUrl ?? article.panels[0]?.imageUrl;
 }
 
 function Metric({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {

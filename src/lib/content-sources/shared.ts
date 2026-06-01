@@ -75,20 +75,19 @@ export function scoreEnterpriseRelevance(item: NormalizedContentItem): number {
 
 export function compressEnterpriseCandidates(
   items: NormalizedContentItem[],
-  limit = 30
+  limit = 100,
+  now = new Date()
 ): NormalizedContentItem[] {
   const groups = new Map<string, NormalizedContentItem[]>();
   const unique = dedupeContentItems(items);
-  const relevant = unique.filter((item) => scoreEnterpriseRelevance(item) > 0);
-  const candidates = relevant.length ? relevant : unique;
-  for (const item of candidates) {
+  for (const item of unique) {
     const group = groups.get(item.source) ?? [];
     group.push(item);
     groups.set(item.source, group);
   }
 
   for (const group of groups.values()) {
-    group.sort((left, right) => scoreEnterpriseRelevance(right) - scoreEnterpriseRelevance(left));
+    group.sort((left, right) => scoreCandidatePriority(right, now) - scoreCandidatePriority(left, now));
   }
 
   const compressed: NormalizedContentItem[] = [];
@@ -105,6 +104,15 @@ export function compressEnterpriseCandidates(
   }
 
   return compressed;
+}
+
+export function scoreCandidatePriority(item: NormalizedContentItem, now = new Date()): number {
+  const publishedAt = new Date(item.publishedAt).getTime();
+  const ageHours = Number.isFinite(publishedAt)
+    ? Math.max(0, (now.getTime() - publishedAt) / (60 * 60 * 1000))
+    : 24;
+  const freshness = Math.max(0, 24 - ageHours);
+  return scoreEnterpriseRelevance(item) * 4 + freshness;
 }
 
 export function filterItemsWithinHours(

@@ -5,16 +5,18 @@ import {
 import type { VisualBriefManifest } from "@/lib/domain/types";
 import { optionalEnv } from "@/lib/env";
 import { BRIEF_SYSTEM_PROMPT, buildBriefPrompt } from "@/lib/server/brief-prompt";
+import { generateVisualBriefWithRetry } from "@/lib/server/deepseek-brief";
 import {
   createProgressLog,
   type GenerationProgressReporter
 } from "@/lib/server/generation-progress";
 import { persistSeedreamImageForRender } from "@/lib/server/persist-seedream-image";
+import { readLatestManifest } from "@/lib/server/visual-manifest";
 import { generateWithDeepSeek } from "@/lib/services/deepseek";
 import { generateSeedreamImages } from "@/lib/services/seedream";
 import { putPublicBlob } from "@/lib/storage/blob";
 import { articleManifestPath, latestManifestPath, panelBlobPath } from "@/lib/storage/paths";
-import { buildFallbackVisualBrief, normalizeVisualBrief, validateVisualBriefManifest } from "@/lib/visual-brief";
+import { buildFallbackVisualBrief, validateVisualBriefManifest } from "@/lib/visual-brief";
 import { selectIllustrationPrompts } from "@/lib/visual-render/illustrations";
 import { renderSheetPng } from "@/lib/visual-render/render-sheet";
 import { buildVisualBriefSheetPlans } from "@/lib/visual-render/sheet-plan";
@@ -36,8 +38,13 @@ export async function generateDailyVisualBrief(input: {
 
   report("info", "system", `创建 ${date} 的企业 AI 落地长图简报任务`);
   report("running", "sources", "并行抓取五路公开信号源");
+  const previousManifest = await readLatestManifest().catch(() => null);
+  const previousSourceUrls = previousManifest
+    ? Array.from(new Set(previousManifest.panels.flatMap((panel) => panel.sourceUrls)))
+    : [];
   const source = await collectEnterpriseAiCandidates({
     now,
+    excludedUrls: previousSourceUrls,
     onProgress: (event) =>
       report(
         event.status === "running" ? "running" : event.status === "success" ? "success" : "error",
@@ -53,23 +60,47 @@ export async function generateDailyVisualBrief(input: {
     source.failures.length ? `${source.failures.length} 路来源暂时不可用，其余来源继续运行` : "五路来源均可用"
   );
 
-  report("running", "deepseek", "调用 DeepSeek 生成固定 10 屏简报结构");
-  const briefText = await generateWithDeepSeek({
-    system: BRIEF_SYSTEM_PROMPT,
-    prompt: buildBriefPrompt(date, source.sourceWindow, source.items),
-    fallback: JSON.stringify(buildFallbackVisualBrief({ date, sourceWindow: source.sourceWindow, items: source.items }))
-  });
-  const brief = normalizeVisualBrief(briefText, {
+  const briefContext = {
     date,
     sourceWindow: source.sourceWindow,
     items: source.items
-  });
-  report(
-    "success",
-    "deepseek",
-    `简报结构已确认，共 ${brief.panels.length} 个长图分镜`,
-    optionalEnv("DEEPSEEK_API_KEY") ? "使用 DeepSeek API" : "未配置 DEEPSEEK_API_KEY，使用规则化兜底内容"
-  );
+  };
+  report("running", "deepseek", "调用 DeepSeek 对候选素材分类、筛选并生成固定 10 屏结构");
+  const deepseek = optionalEnv("DEEPSEEK_API_KEY")
+    ? await generateVisualBriefWithRetry({
+        context: briefContext,
+        request: () => generateWithDeepSeek({
+          system: BRIEF_SYSTEM_PROMPT,
+          prompt: buildBriefPrompt(date, source.sourceWindow, source.items),
+          fallback: ""
+        }),
+        onRetry: (reason) =>
+          report("running", "deepseek", "DeepSeek 首次输出未通过校验，正在重试", reason)
+      })
+    : {
+        brief: buildFallbackVisualBrief(briefContext),
+        diagnostics: {
+          contentMode: "fallback" as const,
+          attempts: 0,
+          degradationReason: "未配置 DEEPSEEK_API_KEY"
+        }
+      };
+  const brief = deepseek.brief;
+  if (deepseek.diagnostics.contentMode === "fallback") {
+    report(
+      "error",
+      "deepseek",
+      "DeepSeek 未返回可用结构，已降级为规则化兜底内容",
+      deepseek.diagnostics.degradationReason
+    );
+  } else {
+    report(
+      "success",
+      "deepseek",
+      `DeepSeek 已完成分类、筛选与选题，共 ${brief.panels.length} 个长图分镜`,
+      `调用 ${deepseek.diagnostics.attempts} 次`
+    );
+  }
 
   if (!optionalEnv("ARK_API_KEY") || !optionalEnv("ARK_SEEDREAM_MODEL")) {
     report("info", "seedream", "未配置完整 Seedream 参数，将使用本地占位配图");
@@ -90,16 +121,19 @@ export async function generateDailyVisualBrief(input: {
     }
   });
 
-  const persistedSeedreamUrls = await Promise.all(
+  const persistedSeedreamImages = await Promise.all(
     seedreamImages.map(async (image, index) => {
       report("running", "blob", `保存配图素材 ${index + 1}/${seedreamImages.length}`);
       const persisted = await persistSeedreamImageForRender(date, index + 1, image.url, revision);
       report("success", "blob", `配图素材 ${index + 1}/${seedreamImages.length} 已保存`);
-      return persisted.renderUrl;
+      return persisted;
     })
   );
 
-  const sheetPlans = buildVisualBriefSheetPlans(brief.panels, persistedSeedreamUrls);
+  const sheetPlans = buildVisualBriefSheetPlans(
+    brief.panels,
+    persistedSeedreamImages.map((image) => image.renderUrl)
+  );
   const panels: VisualBriefManifest["panels"] = [];
   for (const [index, sheet] of sheetPlans.entries()) {
     report("running", "render", `渲染 PNG 长图 ${index + 1}/${sheetPlans.length}`, sheet.title);
@@ -124,12 +158,30 @@ export async function generateDailyVisualBrief(input: {
   }
 
   report("running", "manifest", "写入文章索引和 latest 指针");
+  const selectedSourceUrls = Array.from(new Set(brief.panels.flatMap((panel) => panel.sourceUrls)));
   const manifest = validateVisualBriefManifest({
     date,
     title: brief.title,
     subtitle: brief.subtitle,
     generatedAt: now.toISOString(),
     sourceWindow: brief.sourceWindow,
+    coverImageUrl: persistedSeedreamImages[0]?.assetUrl,
+    generation: {
+      contentMode: deepseek.diagnostics.contentMode,
+      deepseekAttempts: deepseek.diagnostics.attempts,
+      degradationReason: deepseek.diagnostics.degradationReason,
+      candidateCount: source.items.length,
+      sourceStats: source.sourceStats,
+      excludedPreviousUrls: source.excludedPreviousUrls,
+      selectedSourceUrls,
+      candidatePool: source.items.map(({ title, url, source, category, publishedAt }) => ({
+        title,
+        url,
+        source,
+        category,
+        publishedAt
+      }))
+    },
     article: {
       panels: brief.panels.map(({ kind, kicker, title, body, sourceUrls }) => ({
         kind,
@@ -139,9 +191,9 @@ export async function generateDailyVisualBrief(input: {
         sourceUrls
       }))
     },
-    illustrations: persistedSeedreamUrls.map((imageUrl, index) => ({
+    illustrations: persistedSeedreamImages.map(({ assetUrl }, index) => ({
       index: index + 1,
-      imageUrl
+      imageUrl: assetUrl
     })),
     panels
   });

@@ -43,4 +43,14 @@ describe("magazine sheet layout", () => {
     expect(source).toContain("gap: 12");
     expect(source).toContain("paddingRight: 12");
   });
+
+  it("shows wide Seedream images without cropping", async () => {
+    const source = await readFile(
+      path.join(process.cwd(), "src", "lib", "visual-render", "render-sheet.tsx"),
+      "utf8"
+    );
+
+    expect(source).toContain('objectFit: "contain"');
+    expect(source).not.toContain('objectFit: "cover"');
+  });
 });

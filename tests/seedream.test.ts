@@ -11,7 +11,7 @@ describe("Seedream image generation", () => {
     process.env.ARK_SEEDREAM_MODEL = originalModel;
   });
 
-  it("requests a Seedream 5 compatible 2048x2048 image", async () => {
+  it("requests a Seedream wide image suitable for 2.35:1 editorial frames", async () => {
     let requestBody: Record<string, unknown> | undefined;
     process.env.ARK_API_KEY = "test-api-key";
     process.env.ARK_SEEDREAM_MODEL = "test-model";
@@ -22,7 +22,7 @@ describe("Seedream image generation", () => {
 
     await generateSeedreamImages({ runId: "2026-05-30", prompts: ["retro futuristic AI newsroom"] });
 
-    expect(requestBody?.size).toBe("2048x2048");
+    expect(requestBody?.size).toBe("3136x1344");
   });
 
   it("generates at most three images concurrently", async () => {

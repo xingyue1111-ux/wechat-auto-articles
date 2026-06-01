@@ -43,6 +43,24 @@ export type VisualBriefManifest = {
   subtitle: string;
   generatedAt: string;
   sourceWindow: SourceWindow;
+  coverImageUrl?: string;
+  generation?: {
+    contentMode: "deepseek" | "fallback";
+    deepseekAttempts: number;
+    degradationReason?: string;
+    candidateCount: number;
+    sourceStats: Array<{
+      id: string;
+      label: string;
+      count: number;
+    }>;
+    excludedPreviousUrls: string[];
+    selectedSourceUrls: string[];
+    candidatePool: Array<Pick<
+      NormalizedContentItem,
+      "title" | "url" | "source" | "category" | "publishedAt"
+    >>;
+  };
   article?: {
     panels: ArchivedVisualBriefPanel[];
   };

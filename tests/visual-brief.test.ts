@@ -147,6 +147,37 @@ describe("visual brief generation", () => {
     expect(manifest.illustrations).toBeUndefined();
   });
 
+  it("keeps cover and generation diagnostics for archived briefs", () => {
+    const manifest = validateVisualBriefManifest({
+      date: "2026-05-31",
+      title: "Enterprise AI",
+      subtitle: "24h",
+      generatedAt: "2026-05-31T11:00:00.000Z",
+      sourceWindow: "24h",
+      coverImageUrl: "https://blob.example/cover.png",
+      generation: {
+        contentMode: "deepseek",
+        deepseekAttempts: 1,
+        candidateCount: 1,
+        sourceStats: [{ id: "aihot", label: "AI HOT", count: 1 }],
+        excludedPreviousUrls: [],
+        selectedSourceUrls: ["https://example.com/1"],
+        candidatePool: [{
+          title: "Agent workflow",
+          url: "https://example.com/1",
+          source: "AI HOT",
+          category: "enterprise-ai",
+          publishedAt: "2026-05-31T10:00:00.000Z"
+        }]
+      },
+      panels: manifestPanels()
+    });
+
+    expect(manifest.coverImageUrl).toContain("cover.png");
+    expect(manifest.generation?.candidateCount).toBe(1);
+    expect(manifest.generation?.candidatePool[0].source).toBe("AI HOT");
+  });
+
   it("rejects malformed archive extras", () => {
     expect(() => validateVisualBriefManifest({
       date: "2026-05-31",
@@ -167,7 +198,9 @@ describe("visual brief generation", () => {
     );
 
     expect(source).toContain("article: {");
-    expect(source).toContain("illustrations: persistedSeedreamUrls.map");
+    expect(source).toContain("illustrations: persistedSeedreamImages.map");
+    expect(source).toContain("coverImageUrl:");
+    expect(source).toContain("generation:");
   });
 });
 

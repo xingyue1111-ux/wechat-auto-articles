@@ -57,7 +57,7 @@ describe("enterprise AI content utilities", () => {
     expect(new Set(compressed.map((candidate) => candidate.source)).size).toBe(5);
   });
 
-  it("drops generic news when enterprise implementation signals are available", () => {
+  it("keeps generic news available for downstream synthesis", () => {
     const compressed = compressEnterpriseCandidates([
       item("AI HOT", "1", "Agent workflow permissions", "https://example.com/agent"),
       {
@@ -66,7 +66,7 @@ describe("enterprise AI content utilities", () => {
       }
     ]);
 
-    expect(compressed.map((candidate) => candidate.externalId)).toEqual(["1"]);
+    expect(compressed.map((candidate) => candidate.externalId)).toEqual(["1", "2"]);
   });
 
   it("keeps only the rolling previous 24 hours and sorts newest first", () => {
@@ -199,6 +199,60 @@ describe("multisource aggregation", () => {
     ];
 
     await expect(collectEnterpriseAiCandidates({ collectors })).rejects.toThrow("No content sources");
+  });
+
+  it("keeps up to twenty recent candidates from each source before synthesis", async () => {
+    const now = new Date("2026-05-31T12:00:00.000Z");
+    const sourceIds: Array<[ContentSourceCollector["id"], string]> = [
+      ["aihot", "AI HOT"],
+      ["hacker-news", "Hacker News"],
+      ["hugging-face", "Hugging Face Daily Papers"],
+      ["arxiv", "arXiv RSS"],
+      ["github-releases", "GitHub Releases"]
+    ];
+    const collectors = sourceIds.map(([id, label]) =>
+      collector(
+        id,
+        label,
+        Array.from({ length: 25 }, (_, index) => ({
+          ...item(label, `${id}-${index}`, `Agent workflow ${id} ${index}`, `https://example.com/${id}/${index}`),
+          publishedAt: "2026-05-31T11:00:00.000Z"
+        }))
+      )
+    );
+
+    const result = await collectEnterpriseAiCandidates({ collectors, now });
+
+    expect(result.items).toHaveLength(100);
+    expect(result.sourceStats.map((source) => source.count)).toEqual([20, 20, 20, 20, 20]);
+  });
+
+  it("excludes links from the previous brief when fresh alternatives remain", async () => {
+    const now = new Date("2026-05-31T12:00:00.000Z");
+    const previousUrl = "https://example.com/previous";
+    const result = await collectEnterpriseAiCandidates({
+      now,
+      excludedUrls: [previousUrl],
+      collectors: [
+        collector("aihot", "AI HOT", [
+          { ...item("AI HOT", "previous", "Agent workflow previous", previousUrl), publishedAt: "2026-05-31T11:00:00.000Z" },
+          { ...item("AI HOT", "fresh", "Agent workflow fresh", "https://example.com/fresh"), publishedAt: "2026-05-31T10:00:00.000Z" }
+        ])
+      ]
+    });
+
+    expect(result.items.map((entry) => entry.url)).toEqual(["https://example.com/fresh"]);
+    expect(result.excludedPreviousUrls).toEqual([previousUrl]);
+  });
+
+  it("prefers fresher candidates when relevance is equal", () => {
+    const now = new Date("2026-05-31T12:00:00.000Z");
+    const ranked = compressEnterpriseCandidates([
+      { ...item("AI HOT", "older", "Agent workflow alpha", "https://example.com/older"), publishedAt: "2026-05-31T02:00:00.000Z" },
+      { ...item("AI HOT", "newer", "Agent workflow beta", "https://example.com/newer"), publishedAt: "2026-05-31T11:00:00.000Z" }
+    ], 2, now);
+
+    expect(ranked.map((entry) => entry.externalId)).toEqual(["newer", "older"]);
   });
 });
 
