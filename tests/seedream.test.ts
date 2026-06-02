@@ -46,7 +46,7 @@ describe("Seedream image generation", () => {
     expect(maxActive).toBe(3);
   });
 
-  it("retries once and degrades to a placeholder after a second failure", async () => {
+  it("retries once and aborts the run after a second generation failure", async () => {
     process.env.ARK_API_KEY = "test-api-key";
     process.env.ARK_SEEDREAM_MODEL = "test-model";
     let attempts = 0;
@@ -55,14 +55,13 @@ describe("Seedream image generation", () => {
       return Response.json({ error: { message: "upstream unavailable" } }, { status: 503 });
     });
 
-    const images = await generateSeedreamImages({
+    await expect(generateSeedreamImages({
       runId: "2026-05-30",
       prompts: ["prompt"],
       retryDelayMs: 0
-    });
+    })).rejects.toThrow("Seedream 配图 1/1 生成失败");
 
     expect(attempts).toBe(2);
-    expect(images[0].url).toMatch(/^data:image\/svg\+xml;base64,/);
   });
 
   it("sends an abort signal with every Seedream request", async () => {

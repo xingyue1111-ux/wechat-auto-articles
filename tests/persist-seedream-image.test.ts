@@ -27,19 +27,22 @@ describe("persisted Seedream image rendering", () => {
     expect(image.renderUrl).not.toBe("https://seedream.example/generated.png");
   });
 
-  it("uses a local placeholder when the generated image cannot be downloaded", async () => {
+  it("retries once and aborts the run when the generated image cannot be downloaded", async () => {
     process.env.BLOB_READ_WRITE_TOKEN = "";
+    let attempts = 0;
     vi.stubGlobal("fetch", async () => {
+      attempts += 1;
       throw new Error("temporary download failure");
     });
 
-    const image = await persistSeedreamImageForRender(
+    await expect(persistSeedreamImageForRender(
       "2026-05-30",
       2,
-      "https://seedream.example/generated.png"
-    );
+      "https://seedream.example/generated.png",
+      undefined,
+      { retryDelayMs: 0 }
+    )).rejects.toThrow("Seedream 配图 2 下载失败");
 
-    expect(image.renderUrl).toMatch(/^data:image\/svg\+xml;base64,/);
-    expect(image.renderUrl).not.toBe("https://seedream.example/generated.png");
+    expect(attempts).toBe(2);
   });
 });

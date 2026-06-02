@@ -7,7 +7,7 @@ type GeneratedSeedreamImage = {
   storagePath: string;
 };
 
-type SeedreamProgressStatus = "running" | "retrying" | "degraded" | "success";
+type SeedreamProgressStatus = "running" | "retrying" | "failed" | "success";
 
 export async function generateSeedreamImages(input: {
   runId: string;
@@ -124,10 +124,14 @@ async function generateOneImage(input: {
       }
 
       const payload = (await response.json()) as { data?: Array<{ url?: string }> };
+      const url = payload.data?.[0]?.url;
+      if (!url) {
+        throw new Error("Seedream 返回结果缺少图片 URL");
+      }
       input.onProgress?.({ index: input.index, total: input.total, status: "success" });
       return {
         prompt: input.prompt,
-        url: payload.data?.[0]?.url ?? placeholderImageUrl(input.index),
+        url,
         storagePath: storagePath(input.runId, input.index)
       };
     } catch (error) {
@@ -141,10 +145,10 @@ async function generateOneImage(input: {
   input.onProgress?.({
     index: input.index,
     total: input.total,
-    status: "degraded",
+    status: "failed",
     detail: lastError
   });
-  return placeholderImage(input.runId, input.prompt, input.index);
+  throw new Error(`Seedream 配图 ${input.index}/${input.total} 生成失败：${lastError}`);
 }
 
 function placeholderImage(runId: string, prompt: string, index: number): GeneratedSeedreamImage {

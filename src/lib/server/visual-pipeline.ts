@@ -113,8 +113,8 @@ export async function generateDailyVisualBrief(input: {
         report("running", "seedream", `Seedream 正在生成配图 ${index}/${total}`);
       } else if (status === "retrying") {
         report("running", "seedream", `Seedream 配图 ${index}/${total} 首次未完成，正在重试`, detail);
-      } else if (status === "degraded") {
-        report("error", "seedream", `Seedream 配图 ${index}/${total} 已降级为占位图`, detail);
+      } else if (status === "failed") {
+        report("error", "seedream", `Seedream 配图 ${index}/${total} 生成失败`, detail);
       } else {
         report("success", "seedream", `Seedream 配图 ${index}/${total} 已生成`);
       }
