@@ -62,7 +62,7 @@ function CoverSheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
       </div>
       <EditorialImageFrame src={plan.seedreamImageUrl} height={424} />
       <div style={{ display: "flex", flexDirection: "column", padding: "38px 58px 0" }}>
-        <EditorialBlock panel={context} index={1} compact />
+        <EditorialBlock panel={context} index={plan.panelNumbers[1] + 1} compact />
       </div>
       <SheetFooter />
     </Sheet>
@@ -77,7 +77,7 @@ function AnalysisSheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
       <EditorialImageFrame src={plan.seedreamImageUrl} height={424} position="center 48%" />
       <div style={{ display: "flex", flexDirection: "column", padding: "26px 58px 0" }}>
         {plan.panels.map((panel, index) => (
-          <EditorialBlock key={`${panel.kind}-${index}`} panel={panel} index={index + 1} />
+          <EditorialBlock key={`${panel.kind}-${index}`} panel={panel} index={plan.panelNumbers[index] + 1} />
         ))}
       </div>
       <SheetFooter />
@@ -93,7 +93,7 @@ function RadarSheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
       <EditorialImageFrame src={plan.seedreamImageUrl} height={424} position="center 58%" />
       <div style={{ display: "flex", flexDirection: "column", padding: "26px 58px 0" }}>
         {plan.panels.map((panel, index) => (
-          <EditorialBlock key={`${panel.kind}-${index}`} panel={panel} index={index + 1} radar />
+          <EditorialBlock key={`${panel.kind}-${index}`} panel={panel} index={plan.panelNumbers[index] + 1} radar />
         ))}
       </div>
       <SheetFooter />

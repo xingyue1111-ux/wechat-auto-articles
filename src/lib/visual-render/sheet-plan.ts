@@ -9,6 +9,7 @@ export type VisualBriefSheetPlan = {
   width: 1080;
   height: number;
   seedreamImageUrl: string;
+  panelNumbers: number[];
   panels: VisualBriefPanelDraft[];
   theme: {
     background: "#F4E8CF";
@@ -72,6 +73,7 @@ export function buildVisualBriefSheetPlans(
       width: 1080,
       height: sheetHeight(group.variant, groupedPanels),
       seedreamImageUrl: illustrationUrls[group.illustrationIndex] ?? fallbackIllustration,
+      panelNumbers: group.panelIndexes,
       panels: groupedPanels,
       theme: {
         background: "#F4E8CF",

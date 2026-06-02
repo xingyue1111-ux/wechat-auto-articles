@@ -53,4 +53,23 @@ describe("magazine sheet layout", () => {
     expect(source).toContain('objectFit: "contain"');
     expect(source).not.toContain('objectFit: "cover"');
   });
+
+  it("renders exactly one illustration frame on each of the four long-image sheets", async () => {
+    const source = await readFile(
+      path.join(process.cwd(), "src", "lib", "visual-render", "render-sheet.tsx"),
+      "utf8"
+    );
+
+    expect(source.match(/<EditorialImageFrame/g)).toHaveLength(4);
+  });
+
+  it("uses global story numbers instead of restarting on each sheet", async () => {
+    const source = await readFile(
+      path.join(process.cwd(), "src", "lib", "visual-render", "render-sheet.tsx"),
+      "utf8"
+    );
+
+    expect(source).toContain("plan.panelNumbers[index]");
+    expect(source).not.toContain("index={index + 1}");
+  });
 });
