@@ -20,8 +20,8 @@ export default async function AdminPage() {
       <header className="topbar">
         <div>
           <p className="eyebrow">Enterprise AI Visual Brief</p>
-          <h1>长图简报生成台</h1>
-          <p className="muted">聚合五路公开信号，生成面向企业 AI 落地负责人的复古未来主义长图简报。</p>
+          <h1>公众号文章生成台</h1>
+          <p className="muted">聚合五路公开信号，生成完整公众号正文、4 张 Seedream 配图和 4 张备用长图。</p>
         </div>
         <div className="topbar-actions">
           <a className="button secondary" href="/archive">
@@ -51,7 +51,7 @@ export default async function AdminPage() {
 
       <section className="panel">
         <h2>立即生成</h2>
-        <p className="muted">生成过程会抓取新闻、调用 DeepSeek、调用 Seedream，再把每一屏合成为真实 PNG 长图。</p>
+        <p className="muted">生成过程会抓取新闻、调用 DeepSeek 生成完整文章、调用 Seedream 生成配图，再输出可复制正文和备用 PNG 长图。</p>
         <GenerateBriefForm />
       </section>
 
@@ -69,11 +69,11 @@ export default async function AdminPage() {
                 <div>
                   <strong>{article.date}</strong>
                   <span>{article.title}</span>
-                  <small>{article.panels.length} 张长图</small>
+                  <small>公众号 HTML · 4 张配图 · 4 张备用长图</small>
                 </div>
-                <a className="button secondary compact" href={`/article/${article.date}`}>
+                <a className="button secondary compact" href={`/admin/article/${article.date}`}>
                   <Eye size={16} />
-                  <span>查看</span>
+                  <span>查看发布稿</span>
                 </a>
               </article>
             ))}

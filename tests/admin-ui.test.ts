@@ -35,7 +35,7 @@ describe("admin generation form", () => {
 
     expect(source).toContain("listArticleManifestSummaries");
     expect(source).toContain("已保存简报");
-    expect(source).toContain('href={`/article/${article.date}`}');
+    expect(source).toContain('href={`/admin/article/${article.date}`}');
     expect(source).toContain("article-history-cover");
   });
 
@@ -56,5 +56,28 @@ describe("admin generation form", () => {
     expect(source).toContain("原始信号来源");
     expect(source).toContain("该历史版本未保存正文");
     expect(source).toContain("该历史版本未保存原始配图");
+  });
+
+  it("provides a protected wechat publishing workbench", async () => {
+    const source = await readFile(
+      path.join(process.cwd(), "src", "components", "wechat-publishing-workbench.tsx"),
+      "utf8"
+    );
+
+    expect(source).toContain("一键复制公众号正文");
+    expect(source).toContain("navigator.clipboard.write");
+    expect(source).toContain("ClipboardItem");
+    expect(source).toContain('document.execCommand("copy")');
+    expect(source).toContain("下载图");
+    expect(source).toContain("备用长图");
+  });
+
+  it("redirects completed generation to the publishing workbench", async () => {
+    const source = await readFile(
+      path.join(process.cwd(), "src", "app", "api", "admin", "generate-stream", "route.ts"),
+      "utf8"
+    );
+
+    expect(source).toContain("`/admin/article/${manifest.date}`");
   });
 });

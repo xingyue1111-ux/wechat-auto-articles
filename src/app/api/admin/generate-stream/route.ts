@@ -38,7 +38,7 @@ export async function POST() {
           });
           send({
             type: "complete",
-            redirectUrl: `/article/${manifest.date}`,
+            redirectUrl: `/admin/article/${manifest.date}`,
             timestamp: new Date().toISOString()
           });
         } catch (error) {
