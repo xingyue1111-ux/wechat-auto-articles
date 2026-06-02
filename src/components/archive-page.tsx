@@ -27,9 +27,9 @@ export function ArchivePage({ articles }: { articles: VisualBriefManifest[] }) {
                   <p className="muted">{article.subtitle}</p>
                   <small>{formatGeneratedAt(article.generatedAt)} · {article.panels.length} 张公众号长图</small>
                 </div>
-                <a className="button secondary compact" href={`/article/${article.date}`}>
+                <a className="button secondary compact" href={`/admin/article/${article.date}`}>
                   <Images size={16} />
-                  <span>查看长图</span>
+                  <span>查看发布稿</span>
                 </a>
               </div>
               {coverImageUrl(article) ? (
@@ -38,7 +38,7 @@ export function ArchivePage({ articles }: { articles: VisualBriefManifest[] }) {
               ) : null}
 
               <details className="archive-copy">
-                <summary>查看推文内容</summary>
+                <summary>公众号完整正文</summary>
                 {article.article?.panels.length ? (
                   <div className="archive-copy-body">
                     {article.article.panels.map((panel, index) => (

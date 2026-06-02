@@ -50,7 +50,9 @@ describe("admin generation form", () => {
     const source = await readFile(path.join(process.cwd(), "src", "components", "archive-page.tsx"), "utf8");
 
     expect(source).toContain("archive-card-cover");
-    expect(source).toContain("推文内容");
+    expect(source).toContain("公众号完整正文");
+    expect(source).toContain('href={`/admin/article/${article.date}`}');
+    expect(source).toContain("查看发布稿");
     expect(source).toContain("Seedream 原始配图");
     expect(source).toContain("最终公众号长图");
     expect(source).toContain("原始信号来源");
