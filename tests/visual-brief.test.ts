@@ -75,6 +75,18 @@ describe("visual brief generation", () => {
     expect(brief.panels[5].title).toMatch(/[\u3400-\u9fff]/u);
   });
 
+  it("keeps fallback article copy close to fifteen hundred Chinese characters", () => {
+    const brief = buildFallbackVisualBrief({
+      date: "2026-05-29",
+      sourceWindow: "24h",
+      items: [item("1", "Agent workflow update", "Enterprise AI workflow summary")]
+    });
+    const bodyLength = brief.panels.flatMap((panel) => panel.body).join("").length;
+
+    expect(bodyLength).toBeGreaterThanOrEqual(1400);
+    expect(bodyLength).toBeLessThanOrEqual(1600);
+  });
+
   it("keeps manifest order and blob paths stable", () => {
     const brief = buildFallbackVisualBrief({
       date: "2026-05-29",

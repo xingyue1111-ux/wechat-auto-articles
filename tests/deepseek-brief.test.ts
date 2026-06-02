@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { generateVisualBriefWithRetry } from "@/lib/server/deepseek-brief";
-import type { NormalizedContentItem, VisualPanelKind } from "@/lib/domain/types";
+import { buildFallbackVisualBrief } from "@/lib/visual-brief";
+import type { NormalizedContentItem } from "@/lib/domain/types";
 
 describe("DeepSeek visual brief generation", () => {
   it("retries once when the first response does not match the contract", async () => {
@@ -34,29 +35,15 @@ describe("DeepSeek visual brief generation", () => {
 });
 
 function validBrief() {
-  const kinds: VisualPanelKind[] = [
-    "cover",
-    "context",
-    "news",
-    "news",
-    "news",
-    "news",
-    "news",
-    "news",
-    "takeaway",
-    "footer"
-  ];
+  const brief = buildFallbackVisualBrief({
+    date: "2026-05-31",
+    sourceWindow: "24h",
+    items: [item()]
+  });
   return {
     title: "\u4f01\u4e1a AI \u4fe1\u53f7\u56fe",
     subtitle: "\u8fc7\u53bb 24 \u5c0f\u65f6",
-    panels: kinds.map((kind, index) => ({
-      kind,
-      kicker: `Panel ${index + 1}`,
-      title: `\u4f01\u4e1a AI \u4fe1\u53f7 ${index + 1}`,
-      body: ["\u8fd9\u662f\u4e00\u6761\u53ef\u7528\u7684\u7b80\u4f53\u4e2d\u6587\u6b63\u6587\u3002"],
-      imagePrompt: "retrofuturistic illustration",
-      sourceUrls: ["https://example.com/1"]
-    }))
+    panels: brief.panels
   };
 }
 

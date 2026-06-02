@@ -65,7 +65,7 @@ export async function generateDailyVisualBrief(input: {
     sourceWindow: source.sourceWindow,
     items: source.items
   };
-  report("running", "deepseek", "调用 DeepSeek 对候选素材分类、筛选并生成固定 10 屏结构");
+  report("running", "deepseek", "调用 DeepSeek 分类素材，并生成 1400-1600 字完整公众号文章");
   const deepseek = optionalEnv("DEEPSEEK_API_KEY")
     ? await generateVisualBriefWithRetry({
         context: briefContext,
@@ -97,7 +97,7 @@ export async function generateDailyVisualBrief(input: {
     report(
       "success",
       "deepseek",
-      `DeepSeek 已完成分类、筛选与选题，共 ${brief.panels.length} 个长图分镜`,
+      `DeepSeek 已完成分类、选题与完整文章生成，共 ${brief.panels.length} 个内部排版块`,
       `调用 ${deepseek.diagnostics.attempts} 次`
     );
   }

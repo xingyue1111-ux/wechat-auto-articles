@@ -37,4 +37,15 @@ describe("enterprise AI brief prompt", () => {
     expect(prompt).toContain("至少 2 个独立来源");
     expect(prompt).toContain("分类");
   });
+
+  it("requires a continuous article around fifteen hundred Chinese characters", () => {
+    const prompt = buildBriefPrompt("2026-05-31", "24h", [
+      { title: "Agent workflow update", summary: "Summary", url: "https://example.com/1", source: "AI HOT" }
+    ]);
+
+    expect(prompt).toContain("1400-1600");
+    expect(prompt).toContain("完整文章");
+    expect(prompt).toContain("连续叙事");
+    expect(prompt).not.toContain("雷达信号 01");
+  });
 });
