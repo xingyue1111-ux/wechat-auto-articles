@@ -9,3 +9,4 @@ dist/
 *.tsbuildinfo
 .vercel/
 .worktrees/
+.superpowers/
