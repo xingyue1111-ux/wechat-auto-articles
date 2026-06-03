@@ -3,7 +3,7 @@ import { buildWechatArticleHtml } from "@/lib/wechat-article-html";
 import type { VisualBriefManifest } from "@/lib/domain/types";
 
 describe("wechat article html", () => {
-  it("renders simple inline html with four illustrations in reading order", () => {
+  it("renders simple inline html with manual image placeholders in reading order", () => {
     const html = buildWechatArticleHtml(manifest());
 
     expect(html).toContain("<h1");
@@ -11,10 +11,12 @@ describe("wechat article html", () => {
     expect(html).toContain("<blockquote");
     expect(html).not.toContain("<script");
     expect(html).not.toContain("<style");
-    expect(html.match(/<img/g)).toHaveLength(4);
-    expect(html.indexOf("https://blob.example/1.png")).toBeLessThan(html.indexOf("https://blob.example/2.png"));
-    expect(html.indexOf("https://blob.example/2.png")).toBeLessThan(html.indexOf("https://blob.example/3.png"));
-    expect(html.indexOf("https://blob.example/3.png")).toBeLessThan(html.indexOf("https://blob.example/4.png"));
+    expect(html).not.toContain("<img");
+    expect(html).not.toContain("https://blob.example/1.png");
+    expect(html.match(/请在此处手动上传配图/g)).toHaveLength(4);
+    expect(html.indexOf("请在此处手动上传配图 1")).toBeLessThan(html.indexOf("请在此处手动上传配图 2"));
+    expect(html.indexOf("请在此处手动上传配图 2")).toBeLessThan(html.indexOf("请在此处手动上传配图 3"));
+    expect(html.indexOf("请在此处手动上传配图 3")).toBeLessThan(html.indexOf("请在此处手动上传配图 4"));
   });
 
   it("keeps text readable when illustrations are missing", () => {

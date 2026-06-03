@@ -36,8 +36,9 @@ function headingHtml(text: string): string {
 }
 
 function imageHtml(url: string | undefined, alt: string): string {
+  const index = alt.match(/\d+/u)?.[0] ?? "1";
   return url
-    ? `<p style="margin:22px 0;text-align:center;"><img src="${escapeAttribute(url)}" alt="${escapeAttribute(alt)}" style="display:block;width:100%;height:auto;" /></p>`
+    ? `<p style="margin:22px 0;padding:14px 16px;border:1px dashed #9ca3af;border-radius:8px;background:#f8fafc;color:#475569;text-align:center;"><strong>请在此处手动上传配图 ${index}</strong><br /><span style="font-size:13px;">使用右侧“下载图 ${index}”保存图片，再在公众号编辑器中上传插入。不要直接使用外链图片。</span></p>`
     : "";
 }
 
@@ -59,8 +60,4 @@ function escapeHtml(value: string): string {
     '"': "&quot;"
   };
   return value.replace(/[&<>"]/g, (character) => entities[character] ?? character);
-}
-
-function escapeAttribute(value: string): string {
-  return escapeHtml(value);
 }

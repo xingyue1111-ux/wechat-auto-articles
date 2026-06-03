@@ -37,7 +37,7 @@ export function WechatPublishingWorkbench({
         <div>
           <p className="eyebrow">WeChat Publishing Workbench</p>
           <h1>{manifest.title}</h1>
-          <p className="muted">复制正文后粘贴到公众号编辑器。发布前检查 4 张配图是否正常显示。</p>
+          <p className="muted">复制正文后粘贴到公众号编辑器，再手动上传 4 张配图，避免公众号发布后外链图片消失。</p>
         </div>
         <a className="button secondary" href="/admin">返回生成台</a>
       </header>
@@ -45,7 +45,7 @@ export function WechatPublishingWorkbench({
       <section className="publishing-actions">
         <button type="button" onClick={copyWechatArticle}>一键复制公众号正文</button>
         <a className="button secondary" href={`/article/${manifest.date}`}>查看备用长图</a>
-        {copyStatus === "success" ? <p className="form-note">已复制。请粘贴到公众号编辑器并检查配图。</p> : null}
+        {copyStatus === "success" ? <p className="form-note">已复制。请粘贴到公众号编辑器，并按正文中的占位提示手动上传 4 张配图。</p> : null}
         {copyStatus === "error" ? <p className="form-error">复制失败。请手动选择下方预览内容复制。</p> : null}
       </section>
 

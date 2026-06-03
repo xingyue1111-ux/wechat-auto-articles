@@ -70,6 +70,8 @@ describe("admin generation form", () => {
     expect(source).toContain("navigator.clipboard.write");
     expect(source).toContain("ClipboardItem");
     expect(source).toContain('document.execCommand("copy")');
+    expect(source).toContain("手动上传 4 张配图");
+    expect(source).toContain("避免公众号发布后外链图片消失");
     expect(source).toContain("下载图");
     expect(source).toContain("备用长图");
   });
