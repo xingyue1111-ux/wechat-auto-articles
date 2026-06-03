@@ -52,14 +52,22 @@ export function normalizeVisualBriefWithDiagnostics(
       };
     }
     const fallback = buildFallbackVisualBrief(context);
+    const normalizedPanels = panels.map((panel, index) => ensureReaderFacingChinese(panel, fallback.panels[index]));
+    const title = resolveArticleTitle(String(parsed.title), normalizedPanels, fallback.title);
+    if (!isSpecificArticleTitle(normalizedPanels[0].title)) {
+      normalizedPanels[0] = {
+        ...normalizedPanels[0],
+        title
+      };
+    }
 
     return {
       brief: {
         date: context.date,
-        title: chineseOrFallback(String(parsed.title), fallback.title),
+        title,
         subtitle: chineseOrFallback(String(parsed.subtitle ?? ""), fallback.subtitle),
         sourceWindow: context.sourceWindow,
-        panels: panels.map((panel, index) => ensureReaderFacingChinese(panel, fallback.panels[index]))
+        panels: normalizedPanels
       },
       usedFallback: false
     };
@@ -218,7 +226,7 @@ export function validateVisualBriefManifest(input: unknown): VisualBriefManifest
       throw new Error("Invalid manifest panel");
     }
   }
-  return manifest;
+  return repairManifestArticleTitle(manifest);
 }
 
 function hasValidManifestArchive(manifest: VisualBriefManifest): boolean {
@@ -373,6 +381,49 @@ function ensureReaderFacingChinese(
     title: chineseOrFallback(panel.title, fallback.title),
     body: panel.body.map((line, index) => chineseOrFallback(line, fallback.body[index] ?? "请关注这条企业 AI 落地信号。"))
   };
+}
+
+function resolveArticleTitle(modelTitle: string, panels: Array<{ title: string }>, fallback: string): string {
+  return [modelTitle, panels[0]?.title, ...panels.map((panel) => panel.title), fallback]
+    .find(isSpecificArticleTitle) ?? fallback;
+}
+
+function repairManifestArticleTitle(manifest: VisualBriefManifest): VisualBriefManifest {
+  const title = resolveArticleTitle(manifest.title, manifest.article?.panels ?? [], manifest.title);
+  if (title === manifest.title) {
+    return manifest;
+  }
+  return {
+    ...manifest,
+    title,
+    article: manifest.article
+      ? {
+          panels: manifest.article.panels.map((panel, index) =>
+            index === 0 && !isSpecificArticleTitle(panel.title) ? { ...panel, title } : panel
+          )
+        }
+      : manifest.article
+  };
+}
+
+function isSpecificArticleTitle(value: string | undefined): value is string {
+  if (!value) {
+    return false;
+  }
+  const trimmed = value.trim();
+  return trimmed.length >= 8 && /[\u3400-\u9fff]/u.test(trimmed) && !isGenericArticleTitle(trimmed);
+}
+
+function isGenericArticleTitle(value: string): boolean {
+  const compact = value.replace(/\s+/g, "").toLowerCase();
+  return [
+    "企业ai落地信号图",
+    "企业ai日报",
+    "本期总标题",
+    "今日脉络",
+    "重点信号",
+    "落地判断"
+  ].includes(compact);
 }
 
 function chineseOrFallback(value: string, fallback: string): string {

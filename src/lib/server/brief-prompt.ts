@@ -40,6 +40,7 @@ export function buildBriefPrompt(
 - 正文必须围绕一个核心判断连续叙事，前后自然衔接，不得写成互不相关的信号列表。
 - 素材允许时，核心主线必须综合至少 2 个独立来源，不得只改写单条新闻。
 - 标题、摘要和正文必须全部使用简体中文。即使输入素材是英文，也必须先翻译为简体中文。
+- 标题必须具体点出本期主线，不得使用“企业 AI 落地信号图”“企业 AI 日报”“本期总标题”这类占位标题。
 - kicker 可以保留少量固定英文栏目名，但任何面向读者的信息不得直接照搬英文新闻标题或英文摘要。
 - imagePrompt 必须是英文 Seedream 构图描述，不包含可读文字。系统会统一追加复古未来主义杂志风格。
 - sourceUrls 只能使用输入素材中的 URL。
@@ -65,13 +66,13 @@ export function buildBriefPrompt(
 
 ## JSON 结构示例
 {
-  "title": "企业 AI 落地信号图",
+  "title": "智能体安全治理进入生产环境",
   "subtitle": "把公开信号变成可执行判断",
   "panels": [
     {
       "kind": "cover",
       "kicker": "ENTERPRISE AI",
-      "title": "本期总标题",
+      "title": "智能体安全治理进入生产环境",
       "body": ["一句价值说明"],
       "imagePrompt": "retrofuturistic vector illustration, enterprise AI signal radar, Beige Teal Amber, no readable text",
       "sourceUrls": ["https://example.com/source"]

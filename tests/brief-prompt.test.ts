@@ -48,4 +48,13 @@ describe("enterprise AI brief prompt", () => {
     expect(prompt).toContain("连续叙事");
     expect(prompt).not.toContain("雷达信号 01");
   });
+
+  it("forbids generic placeholder article titles", () => {
+    const prompt = buildBriefPrompt("2026-06-03", "24h", [
+      { title: "Anthropic threat report", summary: "AI abuse risk is rising", url: "https://example.com/1", source: "AI HOT" }
+    ]);
+
+    expect(prompt).toContain("不得使用“企业 AI 落地信号图”");
+    expect(prompt).not.toContain('"title": "企业 AI 落地信号图"');
+  });
 });

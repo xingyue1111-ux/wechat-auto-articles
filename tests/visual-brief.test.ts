@@ -72,6 +72,26 @@ describe("visual brief generation", () => {
     expect(brief.title).toBe("智能体安全进入生产环境");
   });
 
+  it("replaces generic model titles with the first concrete article section title", () => {
+    const panels = validPanelsForTitleTest();
+    panels[0].title = "企业 AI 落地信号图";
+    panels[1].title = "今日脉络";
+    panels[2].title = "攻击者智能化：AI 恶意账户风险飙升";
+
+    const brief = normalizeVisualBrief(JSON.stringify({
+      title: "企业 AI 落地信号图",
+      subtitle: "把公开信号变成可执行判断",
+      panels
+    }), {
+      date: "2026-06-03",
+      sourceWindow: "24h",
+      items: [item("1", "Anthropic threat report", "AI abuse risk is rising")]
+    });
+
+    expect(brief.title).toBe("攻击者智能化：AI 恶意账户风险飙升");
+    expect(brief.panels[0].title).toBe("攻击者智能化：AI 恶意账户风险飙升");
+  });
+
   it("does not expose raw English headlines in fallback reader copy", () => {
     const brief = buildFallbackVisualBrief({
       date: "2026-05-29",
@@ -155,6 +175,27 @@ describe("visual brief generation", () => {
     expect(manifest.illustrations?.[0].imageUrl).toContain("seedream-01.png");
   });
 
+  it("repairs generic archived manifest titles from saved article sections", () => {
+    const manifest = validateVisualBriefManifest({
+      date: "2026-06-03",
+      title: "企业 AI 落地信号图",
+      subtitle: "把公开信号变成可执行判断",
+      generatedAt: "2026-06-03T11:00:00.000Z",
+      sourceWindow: "24h",
+      article: {
+        panels: [
+          { kind: "cover", kicker: "ENTERPRISE AI", title: "企业 AI 落地信号图", body: ["正文"], sourceUrls: [] },
+          { kind: "context", kicker: "今日脉络", title: "今日脉络", body: ["正文"], sourceUrls: [] },
+          { kind: "news", kicker: "主线 01", title: "攻击者智能化：AI 恶意账户风险飙升", body: ["正文"], sourceUrls: [] }
+        ]
+      },
+      panels: manifestPanels()
+    });
+
+    expect(manifest.title).toBe("攻击者智能化：AI 恶意账户风险飙升");
+    expect(manifest.article?.panels[0].title).toBe("攻击者智能化：AI 恶意账户风险飙升");
+  });
+
   it("keeps older manifests readable without archive extras", () => {
     const manifest = validateVisualBriefManifest({
       date: "2026-05-30",
@@ -233,6 +274,18 @@ function manifestPanels() {
     { index: 3, kind: "news", title: "雷达", imageUrl: "https://blob.example/3.png", width: 1080, height: 2000, sourceUrls: [] },
     { index: 4, kind: "takeaway", title: "判断", imageUrl: "https://blob.example/4.png", width: 1080, height: 2000, sourceUrls: [] }
   ];
+}
+
+function validPanelsForTitleTest() {
+  const kinds = ["cover", "context", "news", "news", "news", "news", "news", "news", "takeaway", "footer"];
+  return kinds.map((kind, index) => ({
+    kind,
+    kicker: `板块 ${index + 1}`,
+    title: `具体标题 ${index + 1}`,
+    body: ["企业智能体落地需要权限审计恢复验收协同推进。".repeat(7)],
+    imagePrompt: `enterprise workflow section ${index + 1}`,
+    sourceUrls: [`https://example.com/${index + 1}`]
+  }));
 }
 
 function item(id: string, title: string, summary: string): NormalizedContentItem {
