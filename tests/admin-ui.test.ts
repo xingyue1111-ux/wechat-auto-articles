@@ -35,7 +35,7 @@ describe("admin generation form", () => {
 
     expect(source).toContain("listArticleManifestSummaries");
     expect(source).toContain("已保存简报");
-    expect(source).toContain('href={`/admin/article/${article.date}`}');
+    expect(source).toContain("articleAdminHref(article)");
     expect(source).toContain("article-history-cover");
     expect(source).toContain("generationModeLabel");
     expect(source).toContain("规则兜底");
@@ -53,7 +53,7 @@ describe("admin generation form", () => {
 
     expect(source).toContain("archive-card-cover");
     expect(source).toContain("公众号完整正文");
-    expect(source).toContain('href={`/admin/article/${article.date}`}');
+    expect(source).toContain("articleAdminHref(article)");
     expect(source).toContain("查看发布稿");
     expect(source).toContain("Seedream 原始配图");
     expect(source).toContain("最终公众号长图");
@@ -72,6 +72,7 @@ describe("admin generation form", () => {
     expect(source).toContain("navigator.clipboard.write");
     expect(source).toContain("ClipboardItem");
     expect(source).toContain('document.execCommand("copy")');
+    expect(source).toContain("articleLongImageHref(manifest)");
     expect(source).toContain("手动上传 4 张配图");
     expect(source).toContain("避免公众号发布后外链图片消失");
     expect(source).toContain("下载图");
@@ -84,6 +85,23 @@ describe("admin generation form", () => {
       "utf8"
     );
 
-    expect(source).toContain("`/admin/article/${manifest.date}`");
+    expect(source).toContain("articleAdminHref(manifest)");
+    expect(source).toContain("redirectUrl:");
+  });
+
+  it("loads article pages by revision when a run is provided", async () => {
+    const adminSource = await readFile(
+      path.join(process.cwd(), "src", "app", "admin", "article", "[date]", "page.tsx"),
+      "utf8"
+    );
+    const articleSource = await readFile(
+      path.join(process.cwd(), "src", "app", "article", "[date]", "page.tsx"),
+      "utf8"
+    );
+
+    expect(adminSource).toContain("searchParams");
+    expect(adminSource).toContain("readArticleManifest(date, run)");
+    expect(articleSource).toContain("searchParams");
+    expect(articleSource).toContain("readArticleManifest(date, run)");
   });
 });

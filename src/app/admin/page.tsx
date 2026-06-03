@@ -1,5 +1,6 @@
 import { CalendarDays, Eye, ImagePlus, Link2, Sparkles } from "lucide-react";
 import { GenerateBriefForm } from "@/components/generate-brief-form";
+import { articleAdminHref } from "@/lib/article-routes";
 import { listArticleManifestSummaries } from "@/lib/server/visual-manifest";
 
 export const maxDuration = 300;
@@ -61,7 +62,7 @@ export default async function AdminPage() {
         {articles.length ? (
           <div className="article-history">
             {articles.map((article) => (
-              <article className="article-history-row" key={`${article.date}-${article.generatedAt}`}>
+              <article className="article-history-row" key={`${article.date}-${article.revision ?? article.generatedAt}`}>
                 {coverImageUrl(article) ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img className="article-history-cover" src={coverImageUrl(article)} alt="" loading="lazy" />
@@ -71,7 +72,7 @@ export default async function AdminPage() {
                   <span>{article.title}</span>
                   <small>{generationModeLabel(article)} · 公众号 HTML · 4 张配图 · 4 张备用长图</small>
                 </div>
-                <a className="button secondary compact" href={`/admin/article/${article.date}`}>
+                <a className="button secondary compact" href={articleAdminHref(article)}>
                   <Eye size={16} />
                   <span>查看发布稿</span>
                 </a>

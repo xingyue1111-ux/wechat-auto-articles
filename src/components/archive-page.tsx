@@ -1,5 +1,6 @@
 import { ArrowLeft, ExternalLink, Images } from "lucide-react";
 import type { ArchivedVisualBriefPanel, VisualBriefManifest } from "@/lib/domain/types";
+import { articleAdminHref } from "@/lib/article-routes";
 
 export function ArchivePage({ articles }: { articles: VisualBriefManifest[] }) {
   return (
@@ -8,7 +9,7 @@ export function ArchivePage({ articles }: { articles: VisualBriefManifest[] }) {
         <div>
           <p className="eyebrow">Enterprise AI Visual Brief</p>
           <h1>历史归档</h1>
-          <p className="muted">同一天只展示最后一次生成结果。正文、原始配图和最终长图都保存在这里。</p>
+          <p className="muted">每次点击生成都会保存为一篇独立文章。正文、原始配图和最终长图都保存在这里。</p>
         </div>
         <a className="button secondary compact" href="/admin">
           <ArrowLeft size={16} />
@@ -19,7 +20,7 @@ export function ArchivePage({ articles }: { articles: VisualBriefManifest[] }) {
       {articles.length ? (
         <section className="archive-list" aria-label="历史简报">
           {articles.map((article) => (
-            <article className="archive-card" key={article.date}>
+            <article className="archive-card" key={`${article.date}-${article.revision ?? article.generatedAt}`}>
               <div className="archive-card-heading">
                 <div>
                   <time dateTime={article.generatedAt}>{article.date}</time>
@@ -27,7 +28,7 @@ export function ArchivePage({ articles }: { articles: VisualBriefManifest[] }) {
                   <p className="muted">{article.subtitle}</p>
                   <small>{formatGeneratedAt(article.generatedAt)} · {article.panels.length} 张公众号长图</small>
                 </div>
-                <a className="button secondary compact" href={`/admin/article/${article.date}`}>
+                <a className="button secondary compact" href={articleAdminHref(article)}>
                   <Images size={16} />
                   <span>查看发布稿</span>
                 </a>

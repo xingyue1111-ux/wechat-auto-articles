@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { articleAdminHref } from "@/lib/article-routes";
 import { generateDailyVisualBrief } from "@/lib/server/visual-pipeline";
 
 export type GenerateVisualBriefState = {
@@ -11,10 +12,10 @@ export type GenerateVisualBriefState = {
 export async function generateVisualBriefAction(
   _previousState: GenerateVisualBriefState
 ): Promise<GenerateVisualBriefState> {
-  let date: string;
+  let redirectUrl: string;
   try {
     const manifest = await generateDailyVisualBrief();
-    date = manifest.date;
+    redirectUrl = articleAdminHref(manifest);
   } catch (error) {
     console.error("Visual brief generation failed", error);
     return {
@@ -23,5 +24,5 @@ export async function generateVisualBriefAction(
     };
   }
 
-  redirect(`/article/${date}`);
+  redirect(redirectUrl);
 }

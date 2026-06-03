@@ -204,6 +204,9 @@ export function validateVisualBriefManifest(input: unknown): VisualBriefManifest
   if (!manifest.date || !manifest.title || !Array.isArray(manifest.panels)) {
     throw new Error("Invalid manifest shape");
   }
+  if (manifest.revision !== undefined && typeof manifest.revision !== "string") {
+    throw new Error("Invalid manifest revision");
+  }
   if (!hasRequiredManifestSheetOrder(manifest.panels)) {
     throw new Error("Invalid manifest panel order");
   }

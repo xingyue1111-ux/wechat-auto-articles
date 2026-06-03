@@ -8,7 +8,7 @@ vi.mock("@/lib/storage/blob", () => ({
   getTextBlob
 }));
 
-import { listArticleManifestSummaries } from "@/lib/server/visual-manifest";
+import { listArticleManifestSummaries, readArticleManifest } from "@/lib/server/visual-manifest";
 
 describe("article manifest archive", () => {
   beforeEach(() => {
@@ -20,9 +20,16 @@ describe("article manifest archive", () => {
     ]);
     getTextBlob.mockImplementation(async (pathname: string) => JSON.stringify({
       date: pathname.includes("2026-05-31") ? "2026-05-31" : "2026-05-30",
+      revision: pathname.match(/runs\/([^/]+)\/manifest\.json/)?.[1],
       title: "企业 AI 日报",
       subtitle: "过去 24 小时",
-      generatedAt: pathname.includes("2026-05-31") ? "2026-05-31T11:00:00.000Z" : "2026-05-30T11:00:00.000Z",
+      generatedAt: pathname.includes("run-new")
+        ? "2026-05-31T12:00:00.000Z"
+        : pathname.includes("run-old")
+          ? "2026-05-31T10:00:00.000Z"
+          : pathname.includes("2026-05-31")
+            ? "2026-05-31T12:00:00.000Z"
+            : "2026-05-30T11:00:00.000Z",
       sourceWindow: "24h",
       panels: [
         { index: 1, kind: "cover", title: "封面", imageUrl: "https://blob.example/1.png", width: 1080, height: 2000, sourceUrls: [] },
@@ -33,10 +40,21 @@ describe("article manifest archive", () => {
     }));
   });
 
-  it("lists one stable manifest per day and ignores run manifests", async () => {
+  it("lists each same-day run and only uses stable manifests when a day has no runs", async () => {
     const articles = await listArticleManifestSummaries();
 
-    expect(articles.map((article) => article.date)).toEqual(["2026-05-31", "2026-05-30"]);
-    expect(getTextBlob).toHaveBeenCalledTimes(2);
+    expect(articles.map((article) => `${article.date}:${article.revision ?? "stable"}`)).toEqual([
+      "2026-05-31:run-new",
+      "2026-05-31:run-old",
+      "2026-05-30:stable"
+    ]);
+    expect(getTextBlob).toHaveBeenCalledTimes(3);
+  });
+
+  it("reads a specific run manifest by date and revision", async () => {
+    const manifest = await readArticleManifest("2026-05-31", "run-new");
+
+    expect(getTextBlob).toHaveBeenCalledWith("articles/2026-05-31/runs/run-new/manifest.json");
+    expect(manifest?.revision).toBe("run-new");
   });
 });

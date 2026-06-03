@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { VisualBriefManifest } from "@/lib/domain/types";
+import { articleLongImageHref } from "@/lib/article-routes";
 
 export function WechatPublishingWorkbench({
   manifest,
@@ -44,7 +45,7 @@ export function WechatPublishingWorkbench({
 
       <section className="publishing-actions">
         <button type="button" onClick={copyWechatArticle}>一键复制公众号正文</button>
-        <a className="button secondary" href={`/article/${manifest.date}`}>查看备用长图</a>
+        <a className="button secondary" href={articleLongImageHref(manifest)}>查看备用长图</a>
         {copyStatus === "success" ? <p className="form-note">已复制。请粘贴到公众号编辑器，并按正文中的占位提示手动上传 4 张配图。</p> : null}
         {copyStatus === "error" ? <p className="form-error">复制失败。请手动选择下方预览内容复制。</p> : null}
       </section>

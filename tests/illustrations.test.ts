@@ -5,16 +5,26 @@ import {
 } from "@/lib/visual-render/illustrations";
 
 describe("visual brief illustration allocation", () => {
-  it("uses four Seedream illustrations for the four long-image sheets", () => {
-    const prompts = Array.from({ length: 10 }, (_, index) => `prompt-${index + 1}`);
-    const selected = selectIllustrationPrompts(prompts);
+  it("uses four Seedream illustrations for the four article rhythm blocks", () => {
+    const panels = Array.from({ length: 10 }, (_, index) => ({
+      title: `板块标题 ${index + 1}`,
+      body: [`板块正文 ${index + 1}`],
+      imagePrompt: `visual metaphor ${index + 1}`
+    }));
+    const selected = selectIllustrationPrompts(panels);
 
-    expect(selected.map((prompt) => prompt.split(",")[0])).toEqual([
-      "prompt-1",
-      "prompt-3",
-      "prompt-7",
-      "prompt-9"
+    expect(selected).toHaveLength(4);
+    expect(selected.map((prompt) => prompt.match(/article block \d/u)?.[0])).toEqual([
+      "article block 1",
+      "article block 2",
+      "article block 3",
+      "article block 4"
     ]);
+    expect(selected[0]).toContain("板块标题 1 / 板块标题 2");
+    expect(selected[1]).toContain("板块标题 3 / 板块标题 4");
+    expect(selected[2]).toContain("板块标题 5 / 板块标题 6");
+    expect(selected[3]).toContain("板块标题 7 / 板块标题 8");
+    expect(new Set(selected.map((prompt) => prompt.split(",")[1]))).toHaveLength(4);
     expect(selected.every((prompt) => prompt.includes("retro-futurism aesthetic"))).toBe(true);
   });
 

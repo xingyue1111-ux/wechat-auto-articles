@@ -107,7 +107,7 @@ export async function generateDailyVisualBrief(input: {
   }
   const seedreamImages = await generateSeedreamImages({
     runId: revision,
-    prompts: selectIllustrationPrompts(brief.panels.map((panel) => panel.imagePrompt)),
+    prompts: selectIllustrationPrompts(brief.panels),
     onProgress: ({ index, total, status, detail }) => {
       if (status === "running") {
         report("running", "seedream", `Seedream 正在生成配图 ${index}/${total}`);
@@ -161,6 +161,7 @@ export async function generateDailyVisualBrief(input: {
   const selectedSourceUrls = Array.from(new Set(brief.panels.flatMap((panel) => panel.sourceUrls)));
   const manifest = validateVisualBriefManifest({
     date,
+    revision,
     title: brief.title,
     subtitle: brief.subtitle,
     generatedAt: now.toISOString(),

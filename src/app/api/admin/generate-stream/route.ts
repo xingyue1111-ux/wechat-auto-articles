@@ -1,4 +1,5 @@
 import { hasValidAdminSession } from "@/lib/admin/auth";
+import { articleAdminHref } from "@/lib/article-routes";
 import {
   createProgressLog,
   describeGenerationError,
@@ -38,7 +39,7 @@ export async function POST() {
           });
           send({
             type: "complete",
-            redirectUrl: `/admin/article/${manifest.date}`,
+            redirectUrl: articleAdminHref(manifest),
             timestamp: new Date().toISOString()
           });
         } catch (error) {

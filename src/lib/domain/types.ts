@@ -39,6 +39,7 @@ export type ArchivedVisualBriefPanel = Pick<
 
 export type VisualBriefManifest = {
   date: string;
+  revision?: string;
   title: string;
   subtitle: string;
   generatedAt: string;

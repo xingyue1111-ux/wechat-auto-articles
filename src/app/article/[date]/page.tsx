@@ -4,11 +4,22 @@ import { readArticleManifest } from "@/lib/server/visual-manifest";
 
 export const dynamic = "force-dynamic";
 
-export default async function ArticleDatePage({ params }: { params: Promise<{ date: string }> }) {
+export default async function ArticleDatePage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ date: string }>;
+  searchParams: Promise<{ run?: string | string[] }>;
+}) {
   const { date } = await params;
-  const manifest = await readArticleManifest(date);
+  const run = runParam(await searchParams);
+  const manifest = await readArticleManifest(date, run);
   if (!manifest) {
     notFound();
   }
   return <VisualBriefPage manifest={manifest} />;
+}
+
+function runParam(searchParams: { run?: string | string[] }): string | undefined {
+  return Array.isArray(searchParams.run) ? searchParams.run[0] : searchParams.run;
 }
