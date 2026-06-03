@@ -2,6 +2,7 @@ import { optionalEnv } from "@/lib/env";
 import { upstreamError } from "@/lib/server/generation-progress";
 
 const MODEL = "deepseek-v4-pro";
+const MAX_TOKENS = 8000;
 
 export async function generateWithDeepSeek(input: {
   system: string;
@@ -23,7 +24,7 @@ export async function generateWithDeepSeek(input: {
       model: MODEL,
       response_format: { type: "json_object" },
       temperature: 0.2,
-      max_tokens: 5000,
+      max_tokens: MAX_TOKENS,
       messages: [
         { role: "system", content: input.system },
         { role: "user", content: input.prompt }
@@ -36,7 +37,11 @@ export async function generateWithDeepSeek(input: {
   }
 
   const payload = (await response.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
+    choices?: Array<{ finish_reason?: string; message?: { content?: string } }>;
   };
-  return payload.choices?.[0]?.message?.content?.trim() || input.fallback;
+  const choice = payload.choices?.[0];
+  if (choice?.finish_reason === "length") {
+    throw new Error(`DeepSeek 输出被截断，请提高 max_tokens 或缩短输入素材。当前 max_tokens=${MAX_TOKENS}`);
+  }
+  return choice?.message?.content?.trim() || input.fallback;
 }

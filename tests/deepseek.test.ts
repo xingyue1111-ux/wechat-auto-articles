@@ -21,6 +21,19 @@ describe("DeepSeek visual brief generation", () => {
 
     expect(requestBody?.response_format).toEqual({ type: "json_object" });
     expect(requestBody?.temperature).toBe(0.2);
-    expect(requestBody?.max_tokens).toBe(5000);
+    expect(requestBody?.max_tokens).toBe(8000);
+  });
+
+  it("reports truncated DeepSeek output before JSON parsing", async () => {
+    process.env.DEEPSEEK_API_KEY = "test-api-key";
+    vi.stubGlobal("fetch", async () => Response.json({
+      choices: [{ finish_reason: "length", message: { content: "{\"title\":" } }]
+    }));
+
+    await expect(generateWithDeepSeek({
+      system: "Output json",
+      prompt: "Build brief json",
+      fallback: "{}"
+    })).rejects.toThrow("DeepSeek 输出被截断");
   });
 });
