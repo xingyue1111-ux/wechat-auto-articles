@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { buildWechatArticleHtml } from "@/lib/wechat-article-html";
+import {
+  WECHAT_ARTICLE_LAYOUT_COUNT,
+  buildWechatArticleHtml,
+  wechatArticleLayoutVariant
+} from "@/lib/wechat-article-html";
 import type { VisualBriefManifest } from "@/lib/domain/types";
 
 describe("wechat article html", () => {
@@ -34,6 +38,30 @@ describe("wechat article html", () => {
     input.title = "<script>alert(1)</script>";
 
     expect(buildWechatArticleHtml(input)).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
+  });
+
+  it("provides multiple stable layout variants for different generation runs", () => {
+    expect(WECHAT_ARTICLE_LAYOUT_COUNT).toBeGreaterThanOrEqual(4);
+
+    const variants = Array.from({ length: WECHAT_ARTICLE_LAYOUT_COUNT }, (_, index) =>
+      wechatArticleLayoutVariant({ ...manifest(), revision: `run-${index}` })
+    );
+
+    expect(new Set(variants).size).toBe(WECHAT_ARTICLE_LAYOUT_COUNT);
+    expect(wechatArticleLayoutVariant({ ...manifest(), revision: "run-2" })).toBe(
+      wechatArticleLayoutVariant({ ...manifest(), revision: "run-2" })
+    );
+  });
+
+  it("changes the copied article layout across adjacent generation runs", () => {
+    const first = buildWechatArticleHtml({ ...manifest(), revision: "run-0" });
+    const second = buildWechatArticleHtml({ ...manifest(), revision: "run-1" });
+
+    expect(first).toContain('data-layout="');
+    expect(second).toContain('data-layout="');
+    expect(first).not.toBe(second);
+    expect(first).not.toContain("<style");
+    expect(second).not.toContain("<img");
   });
 });
 
