@@ -120,7 +120,7 @@ export function buildFallbackVisualBrief(context: BriefContext): VisualBriefDraf
 
   return {
     date: context.date,
-    title: "企业 AI 落地信号图",
+    title: mainTitle,
     subtitle: "把公开信号变成可执行判断",
     sourceWindow: context.sourceWindow,
     panels: [

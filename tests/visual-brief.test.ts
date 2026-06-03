@@ -58,8 +58,18 @@ describe("visual brief generation", () => {
       items: [item("1", "A", "A summary")]
     });
 
-    expect(brief.title).toBe("企业 AI 落地信号图");
+    expect(brief.title).toBe("企业 AI 工具正在改变成本与交付方式");
     expect(brief.panels).toHaveLength(10);
+  });
+
+  it("uses the main source headline as the fallback article title when it is Chinese", () => {
+    const brief = buildFallbackVisualBrief({
+      date: "2026-05-29",
+      sourceWindow: "24h",
+      items: [item("1", "智能体安全进入生产环境", "企业开始关注权限、审计和可恢复流程")]
+    });
+
+    expect(brief.title).toBe("智能体安全进入生产环境");
   });
 
   it("does not expose raw English headlines in fallback reader copy", () => {

@@ -37,6 +37,8 @@ describe("admin generation form", () => {
     expect(source).toContain("已保存简报");
     expect(source).toContain('href={`/admin/article/${article.date}`}');
     expect(source).toContain("article-history-cover");
+    expect(source).toContain("generationModeLabel");
+    expect(source).toContain("规则兜底");
   });
 
   it("links to the history archive from admin", async () => {

@@ -69,7 +69,7 @@ export default async function AdminPage() {
                 <div>
                   <strong>{article.date}</strong>
                   <span>{article.title}</span>
-                  <small>公众号 HTML · 4 张配图 · 4 张备用长图</small>
+                  <small>{generationModeLabel(article)} · 公众号 HTML · 4 张配图 · 4 张备用长图</small>
                 </div>
                 <a className="button secondary compact" href={`/admin/article/${article.date}`}>
                   <Eye size={16} />
@@ -88,6 +88,16 @@ export default async function AdminPage() {
 
 function coverImageUrl(article: Awaited<ReturnType<typeof listArticleManifestSummaries>>[number]): string | undefined {
   return article.coverImageUrl ?? article.illustrations?.[0]?.imageUrl ?? article.panels[0]?.imageUrl;
+}
+
+function generationModeLabel(article: Awaited<ReturnType<typeof listArticleManifestSummaries>>[number]): string {
+  if (article.generation?.contentMode === "fallback") {
+    return "规则兜底";
+  }
+  if (article.generation?.contentMode === "deepseek") {
+    return "DeepSeek 正文";
+  }
+  return "生成模式未知";
 }
 
 function Metric({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
