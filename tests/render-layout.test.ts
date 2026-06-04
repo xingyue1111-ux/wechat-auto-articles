@@ -72,4 +72,15 @@ describe("magazine sheet layout", () => {
     expect(source).toContain("plan.panelNumbers[index]");
     expect(source).not.toContain("index={index + 1}");
   });
+
+  it("uses mobile-readable body copy close to subheading size", async () => {
+    const source = await readFile(
+      path.join(process.cwd(), "src", "lib", "visual-render", "render-sheet.tsx"),
+      "utf8"
+    );
+
+    expect(source).toContain("const BODY_COPY_FONT_SIZE = 40");
+    expect(source).toContain("const BODY_COPY_LARGE_FONT_SIZE = 44");
+    expect(source).not.toContain("fontSize: large ? 33 : 28");
+  });
 });

@@ -11,6 +11,9 @@ const AMBER = "#D89A2B";
 const INK = "#17211F";
 const BEIGE = "#F4E8CF";
 const PAPER = "#FFFDF8";
+const BODY_COPY_FONT_SIZE = 40;
+const BODY_COPY_LARGE_FONT_SIZE = 44;
+type SheetTheme = VisualBriefSheetPlan["theme"];
 
 export async function renderSheetPng(plan: VisualBriefSheetPlan): Promise<Uint8Array> {
   const svg = await satori(sheetNode(plan), {
@@ -34,8 +37,8 @@ function sheetNode(plan: VisualBriefSheetPlan): ReactNode {
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
-        background: BEIGE,
-        color: INK,
+        background: plan.theme.background ?? BEIGE,
+        color: plan.theme.ink ?? INK,
         fontFamily: "Noto Sans SC"
       }}
     >
@@ -51,20 +54,20 @@ function CoverSheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
   const [cover, context] = plan.panels;
   return (
     <Sheet>
-      <Masthead index={plan.index} />
+      <Masthead index={plan.index} theme={plan.theme} />
       <div style={{ display: "flex", flexDirection: "column", padding: "30px 58px 0" }}>
-        <Kicker>{cover.kicker}</Kicker>
-        <h1 style={coverTitleStyle}>
+        <Kicker theme={plan.theme}>{cover.kicker}</Kicker>
+        <h1 style={coverTitleStyle(plan.theme)}>
           <WrappedLines text={cover.title} maxUnits={20} />
         </h1>
-        <Ornament />
-        <LeadText lines={cover.body} />
+        <Ornament theme={plan.theme} />
+        <LeadText lines={cover.body} theme={plan.theme} />
       </div>
-      <EditorialImageFrame src={plan.seedreamImageUrl} height={424} />
+      <EditorialImageFrame src={plan.seedreamImageUrl} height={424} theme={plan.theme} />
       <div style={{ display: "flex", flexDirection: "column", padding: "38px 58px 0" }}>
-        <EditorialBlock panel={context} index={plan.panelNumbers[1] + 1} compact />
+        <EditorialBlock panel={context} index={plan.panelNumbers[1] + 1} theme={plan.theme} compact />
       </div>
-      <SheetFooter />
+      <SheetFooter theme={plan.theme} />
     </Sheet>
   );
 }
@@ -72,15 +75,15 @@ function CoverSheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
 function AnalysisSheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
   return (
     <Sheet>
-      <Masthead index={plan.index} />
-      <SectionIntro kicker="专题拆解" title={plan.title} number="02" />
-      <EditorialImageFrame src={plan.seedreamImageUrl} height={424} position="center 48%" />
+      <Masthead index={plan.index} theme={plan.theme} />
+      <SectionIntro kicker="专题拆解" title={plan.title} number="02" theme={plan.theme} />
+      <EditorialImageFrame src={plan.seedreamImageUrl} height={424} position="center 48%" theme={plan.theme} />
       <div style={{ display: "flex", flexDirection: "column", padding: "26px 58px 0" }}>
         {plan.panels.map((panel, index) => (
-          <EditorialBlock key={`${panel.kind}-${index}`} panel={panel} index={plan.panelNumbers[index] + 1} />
+          <EditorialBlock key={`${panel.kind}-${index}`} panel={panel} index={plan.panelNumbers[index] + 1} theme={plan.theme} />
         ))}
       </div>
-      <SheetFooter />
+      <SheetFooter theme={plan.theme} />
     </Sheet>
   );
 }
@@ -88,15 +91,15 @@ function AnalysisSheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
 function RadarSheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
   return (
     <Sheet>
-      <Masthead index={plan.index} />
-      <SectionIntro kicker="信号雷达" title={plan.title} number="03" />
-      <EditorialImageFrame src={plan.seedreamImageUrl} height={424} position="center 58%" />
+      <Masthead index={plan.index} theme={plan.theme} />
+      <SectionIntro kicker="信号雷达" title={plan.title} number="03" theme={plan.theme} />
+      <EditorialImageFrame src={plan.seedreamImageUrl} height={424} position="center 58%" theme={plan.theme} />
       <div style={{ display: "flex", flexDirection: "column", padding: "26px 58px 0" }}>
         {plan.panels.map((panel, index) => (
-          <EditorialBlock key={`${panel.kind}-${index}`} panel={panel} index={plan.panelNumbers[index] + 1} radar />
+          <EditorialBlock key={`${panel.kind}-${index}`} panel={panel} index={plan.panelNumbers[index] + 1} theme={plan.theme} radar />
         ))}
       </div>
-      <SheetFooter />
+      <SheetFooter theme={plan.theme} />
     </Sheet>
   );
 }
@@ -105,34 +108,34 @@ function TakeawaySheet({ plan }: { plan: VisualBriefSheetPlan }): ReactNode {
   const [takeaway, footer] = plan.panels;
   return (
     <Sheet>
-      <Masthead index={plan.index} />
-      <SectionIntro kicker="落地判断" title={takeaway.title} number="04" />
-      <EditorialImageFrame src={plan.seedreamImageUrl} height={424} position="center 52%" />
+      <Masthead index={plan.index} theme={plan.theme} />
+      <SectionIntro kicker="落地判断" title={takeaway.title} number="04" theme={plan.theme} />
+      <EditorialImageFrame src={plan.seedreamImageUrl} height={424} position="center 52%" theme={plan.theme} />
       <div style={{ display: "flex", flexDirection: "column", padding: "34px 58px 0" }}>
-        <LeadText lines={takeaway.body} />
+        <LeadText lines={takeaway.body} theme={plan.theme} />
         <div
           style={{
             display: "flex",
             flexDirection: "column",
             marginTop: 40,
             padding: "30px 34px",
-            borderLeft: `12px solid ${AMBER}`,
-            borderTop: `2px solid ${INK}`,
-            background: PAPER
+            borderLeft: `12px solid ${plan.theme.amber ?? AMBER}`,
+            borderTop: `2px solid ${plan.theme.ink ?? INK}`,
+            background: plan.theme.paper ?? PAPER
           }}
         >
-          <Kicker>{footer.kicker}</Kicker>
-          <span style={{ ...sectionTitleStyle, flexDirection: "column", marginTop: 12, fontSize: 44 }}>
+          <Kicker theme={plan.theme}>{footer.kicker}</Kicker>
+          <span style={{ ...sectionTitleStyle(plan.theme), flexDirection: "column", marginTop: 12, fontSize: 44 }}>
             <WrappedLines text={footer.title} maxUnits={17} />
           </span>
           <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 20, paddingRight: 24 }}>
             {footer.body.map((line, index) => (
-              <BodyCopy key={index} text={line} maxUnits={27} />
+              <BodyCopy key={index} text={line} maxUnits={20} theme={plan.theme} />
             ))}
           </div>
         </div>
       </div>
-      <SheetFooter />
+      <SheetFooter theme={plan.theme} />
     </Sheet>
   );
 }
@@ -145,7 +148,7 @@ function Sheet({ children }: { children: ReactNode }): ReactNode {
   );
 }
 
-function Masthead({ index }: { index: number }): ReactNode {
+function Masthead({ index, theme }: { index: number; theme: SheetTheme }): ReactNode {
   return (
     <div style={{ display: "flex", flexDirection: "column", padding: "44px 58px 0" }}>
       <div
@@ -154,30 +157,30 @@ function Masthead({ index }: { index: number }): ReactNode {
           alignItems: "center",
           width: "100%",
           paddingBottom: 14,
-          borderBottom: `2px solid ${INK}`
+          borderBottom: `2px solid ${theme.ink ?? INK}`
         }}
       >
-        <span style={{ display: "flex", color: TEAL, fontSize: 23, fontWeight: 700 }}>
+        <span style={{ display: "flex", color: theme.teal ?? TEAL, fontSize: 23, fontWeight: 700 }}>
           ENTERPRISE AI VISUAL BRIEF
         </span>
-        <span style={{ display: "flex", marginLeft: "auto", color: "rgba(23,33,31,0.62)", fontSize: 21 }}>
+        <span style={{ display: "flex", marginLeft: "auto", color: colorWithAlpha(theme.ink ?? INK, 0.62), fontSize: 21 }}>
           {String(index).padStart(2, "0")} / 04
         </span>
       </div>
-      <Ornament compact />
+      <Ornament theme={theme} compact />
     </div>
   );
 }
 
-function SectionIntro({ kicker, title, number }: { kicker: string; title: string; number: string }): ReactNode {
+function SectionIntro({ kicker, title, number, theme }: { kicker: string; title: string; number: string; theme: SheetTheme }): ReactNode {
   return (
     <div style={{ display: "flex", flexDirection: "column", padding: "28px 58px 24px" }}>
-      <Kicker>{kicker}</Kicker>
+      <Kicker theme={theme}>{kicker}</Kicker>
       <div style={{ display: "flex", alignItems: "flex-end", gap: 22, marginTop: 8 }}>
-        <span style={{ ...sectionTitleStyle, flexDirection: "column", width: 760, fontSize: 74 }}>
+        <span style={{ ...sectionTitleStyle(theme), flexDirection: "column", width: 760, fontSize: 74 }}>
           <WrappedLines text={title} maxUnits={10} />
         </span>
-        <span style={{ display: "flex", marginLeft: "auto", color: AMBER, fontFamily: "Noto Serif SC", fontSize: 130, lineHeight: 0.86 }}>
+        <span style={{ display: "flex", marginLeft: "auto", color: theme.amber ?? AMBER, fontFamily: "Noto Serif SC", fontSize: 130, lineHeight: 0.86 }}>
           {number}
         </span>
       </div>
@@ -188,10 +191,12 @@ function SectionIntro({ kicker, title, number }: { kicker: string; title: string
 function EditorialImageFrame({
   src,
   height,
+  theme,
   position = "center center"
 }: {
   src: string;
   height: number;
+  theme: SheetTheme;
   position?: string;
 }): ReactNode {
   return (
@@ -202,8 +207,8 @@ function EditorialImageFrame({
         height,
         margin: "18px 58px 0",
         padding: 10,
-        border: `2px solid ${INK}`,
-        background: PAPER
+        border: `2px solid ${theme.ink ?? INK}`,
+        background: theme.paper ?? PAPER
       }}
     >
       <div style={{ display: "flex", width: "100%", height: "100%", overflow: "hidden" }}>
@@ -216,11 +221,13 @@ function EditorialImageFrame({
 function EditorialBlock({
   panel,
   index,
+  theme,
   compact = false,
   radar = false
 }: {
   panel: VisualBriefPanelDraft;
   index: number;
+  theme: SheetTheme;
   compact?: boolean;
   radar?: boolean;
 }): ReactNode {
@@ -231,7 +238,7 @@ function EditorialBlock({
         display: "flex",
         gap: 12,
         padding: compact ? "0 0 14px" : "30px 0 34px",
-        borderTop: compact ? "0 solid transparent" : "2px solid rgba(23,33,31,0.2)"
+        borderTop: compact ? "0 solid transparent" : `2px solid ${colorWithAlpha(theme.ink ?? INK, 0.2)}`
       }}
     >
       <div
@@ -239,7 +246,7 @@ function EditorialBlock({
           display: "flex",
           width: radar ? 110 : 88,
           flexShrink: 0,
-          color: AMBER,
+          color: theme.amber ?? AMBER,
           fontFamily: "Noto Serif SC",
           fontSize: radar ? 78 : 66,
           lineHeight: 0.92,
@@ -249,13 +256,13 @@ function EditorialBlock({
         {String(index).padStart(2, "0")}
       </div>
       <div style={{ display: "flex", width: contentWidth, flexShrink: 0, flexDirection: "column", paddingRight: 12 }}>
-        <Kicker>{panel.kicker}</Kicker>
-        <span style={{ ...sectionTitleStyle, flexDirection: "column", marginTop: 9, fontSize: compact ? 43 : 47 }}>
+        <Kicker theme={theme}>{panel.kicker}</Kicker>
+        <span style={{ ...sectionTitleStyle(theme), flexDirection: "column", marginTop: 9, fontSize: compact ? 43 : 47 }}>
           <WrappedLines text={panel.title} maxUnits={radar ? 15 : compact ? 17 : 16} />
         </span>
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 16 }}>
           {panel.body.map((line, bodyIndex) => (
-            <BodyCopy key={bodyIndex} text={line} maxUnits={radar ? 27 : 28} />
+            <BodyCopy key={bodyIndex} text={line} maxUnits={radar ? 20 : 21} theme={theme} />
           ))}
         </div>
       </div>
@@ -263,7 +270,7 @@ function EditorialBlock({
   );
 }
 
-function LeadText({ lines }: { lines: string[] }): ReactNode {
+function LeadText({ lines, theme }: { lines: string[]; theme: SheetTheme }): ReactNode {
   return (
     <div
       style={{
@@ -272,19 +279,19 @@ function LeadText({ lines }: { lines: string[] }): ReactNode {
         gap: 12,
         paddingLeft: 24,
         paddingRight: 24,
-        borderLeft: `10px solid ${TEAL}`
+        borderLeft: `10px solid ${theme.teal ?? TEAL}`
       }}
     >
       {lines.map((line, index) => (
-        <BodyCopy key={index} text={line} maxUnits={26} large />
+        <BodyCopy key={index} text={line} maxUnits={20} theme={theme} large />
       ))}
     </div>
   );
 }
 
-function BodyCopy({ text, maxUnits, large = false }: { text: string; maxUnits: number; large?: boolean }): ReactNode {
+function BodyCopy({ text, maxUnits, theme, large = false }: { text: string; maxUnits: number; theme: SheetTheme; large?: boolean }): ReactNode {
   return (
-    <p style={{ ...bodyStyle, display: "flex", flexDirection: "column", fontSize: large ? 33 : 28 }}>
+    <p style={{ ...bodyStyle(theme), display: "flex", flexDirection: "column", fontSize: large ? BODY_COPY_LARGE_FONT_SIZE : BODY_COPY_FONT_SIZE }}>
       <WrappedLines text={text} maxUnits={maxUnits} />
     </p>
   );
@@ -309,25 +316,25 @@ function EditorialImage({ src, position }: { src: string; position: string }): R
   );
 }
 
-function Ornament({ compact = false }: { compact?: boolean }): ReactNode {
+function Ornament({ theme, compact = false }: { theme: SheetTheme; compact?: boolean }): ReactNode {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: compact ? 10 : 20, marginBottom: compact ? 0 : 24 }}>
-      <span style={{ display: "flex", width: compact ? 82 : 132, height: 8, background: AMBER }} />
-      <span style={{ display: "flex", width: 18, height: 18, border: `3px solid ${TEAL}` }} />
-      <span style={{ display: "flex", width: compact ? 210 : 330, height: 3, background: TEAL }} />
+      <span style={{ display: "flex", width: compact ? 82 : 132, height: 8, background: theme.amber ?? AMBER }} />
+      <span style={{ display: "flex", width: 18, height: 18, border: `3px solid ${theme.teal ?? TEAL}` }} />
+      <span style={{ display: "flex", width: compact ? 210 : 330, height: 3, background: theme.teal ?? TEAL }} />
     </div>
   );
 }
 
-function Kicker({ children }: { children: ReactNode }): ReactNode {
+function Kicker({ children, theme }: { children: ReactNode; theme: SheetTheme }): ReactNode {
   return (
-    <span style={{ display: "flex", color: TEAL, fontSize: 22, fontWeight: 700 }}>
+    <span style={{ display: "flex", color: theme.teal ?? TEAL, fontSize: 22, fontWeight: 700 }}>
       {children}
     </span>
   );
 }
 
-function SheetFooter(): ReactNode {
+function SheetFooter({ theme }: { theme: SheetTheme }): ReactNode {
   return (
     <div
       style={{
@@ -335,8 +342,8 @@ function SheetFooter(): ReactNode {
         justifyContent: "space-between",
         margin: "auto 58px 42px",
         paddingTop: 18,
-        borderTop: "2px solid rgba(23,33,31,0.2)",
-        color: "rgba(23,33,31,0.56)",
+        borderTop: `2px solid ${colorWithAlpha(theme.ink ?? INK, 0.2)}`,
+        color: colorWithAlpha(theme.ink ?? INK, 0.56),
         fontSize: 18
       }}
     >
@@ -346,31 +353,45 @@ function SheetFooter(): ReactNode {
   );
 }
 
-const coverTitleStyle = {
-  display: "flex",
-  flexDirection: "column",
-  margin: "8px 0 0",
-  maxWidth: 900,
-  color: INK,
-  fontFamily: "Noto Serif SC",
-  fontSize: 84,
-  lineHeight: 1.08,
-  letterSpacing: 0,
-  fontWeight: 700
-} as const;
+function coverTitleStyle(theme: SheetTheme) {
+  return {
+    display: "flex",
+    flexDirection: "column",
+    margin: "8px 0 0",
+    maxWidth: 900,
+    color: theme.ink ?? INK,
+    fontFamily: "Noto Serif SC",
+    fontSize: 84,
+    lineHeight: 1.08,
+    letterSpacing: 0,
+    fontWeight: 700
+  } as const;
+}
 
-const sectionTitleStyle = {
-  display: "flex",
-  color: INK,
-  fontFamily: "Noto Serif SC",
-  fontSize: 58,
-  lineHeight: 1.18,
-  letterSpacing: 0,
-  fontWeight: 700
-};
+function sectionTitleStyle(theme: SheetTheme) {
+  return {
+    display: "flex",
+    color: theme.ink ?? INK,
+    fontFamily: "Noto Serif SC",
+    fontSize: 58,
+    lineHeight: 1.18,
+    letterSpacing: 0,
+    fontWeight: 700
+  };
+}
 
-const bodyStyle = {
-  margin: 0,
-  color: "rgba(23,33,31,0.86)",
-  lineHeight: 1.56
-};
+function bodyStyle(theme: SheetTheme) {
+  return {
+    margin: 0,
+    color: colorWithAlpha(theme.ink ?? INK, 0.86),
+    lineHeight: 1.48
+  };
+}
+
+function colorWithAlpha(hex: string, alpha: number): string {
+  const normalized = hex.replace("#", "");
+  const red = Number.parseInt(normalized.slice(0, 2), 16);
+  const green = Number.parseInt(normalized.slice(2, 4), 16);
+  const blue = Number.parseInt(normalized.slice(4, 6), 16);
+  return `rgba(${red},${green},${blue},${alpha})`;
+}

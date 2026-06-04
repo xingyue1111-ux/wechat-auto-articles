@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { buildFallbackVisualBrief } from "@/lib/visual-brief";
-import { buildVisualBriefSheetPlans } from "@/lib/visual-render/sheet-plan";
+import {
+  VISUAL_SHEET_STYLE_COUNT,
+  buildVisualBriefSheetPlans,
+  visualSheetStyleVariant
+} from "@/lib/visual-render/sheet-plan";
 import { wrapVisualText } from "@/lib/visual-render/typography";
 
 describe("visual brief sheet plans", () => {
@@ -40,6 +44,24 @@ describe("visual brief sheet plans", () => {
       [5, 6, 7],
       [8, 9]
     ]);
+  });
+
+  it("rotates long-image visual styles across generation runs", () => {
+    expect(VISUAL_SHEET_STYLE_COUNT).toBeGreaterThanOrEqual(4);
+
+    const variants = Array.from({ length: VISUAL_SHEET_STYLE_COUNT }, (_, index) =>
+      visualSheetStyleVariant(`run-${index}`)
+    );
+    const sheets = buildVisualBriefSheetPlans(
+      buildFallbackVisualBrief({ date: "2026-06-04", sourceWindow: "24h", items: [] }).panels,
+      ["image"],
+      "run-1"
+    );
+
+    expect(new Set(variants).size).toBe(VISUAL_SHEET_STYLE_COUNT);
+    expect(sheets.every((sheet) => sheet.styleVariant === "warm-card")).toBe(true);
+    expect(buildVisualBriefSheetPlans(sheets.flatMap((sheet) => sheet.panels).slice(0, 10), ["image"], "run-2")[0].styleVariant)
+      .not.toBe(sheets[0].styleVariant);
   });
 
   it("wraps continuous Chinese text before it can overflow the sheet width", () => {

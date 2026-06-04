@@ -132,7 +132,8 @@ export async function generateDailyVisualBrief(input: {
 
   const sheetPlans = buildVisualBriefSheetPlans(
     brief.panels,
-    persistedSeedreamImages.map((image) => image.renderUrl)
+    persistedSeedreamImages.map((image) => image.renderUrl),
+    revision
   );
   const panels: VisualBriefManifest["panels"] = [];
   for (const [index, sheet] of sheetPlans.entries()) {

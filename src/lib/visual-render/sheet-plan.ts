@@ -5,6 +5,7 @@ export type VisualBriefSheetPlan = {
   index: number;
   kind: VisualPanelKind;
   variant: "cover" | "analysis" | "radar" | "takeaway";
+  styleVariant: VisualSheetStyleVariant;
   title: string;
   width: 1080;
   height: number;
@@ -12,10 +13,31 @@ export type VisualBriefSheetPlan = {
   panelNumbers: number[];
   panels: VisualBriefPanelDraft[];
   theme: {
-    background: "#F4E8CF";
-    ink: "#17211F";
+    background: string;
+    ink: string;
+    paper: string;
+    teal: string;
+    amber: string;
   };
 };
+
+export type VisualSheetStyleVariant = "classic" | "warm-card" | "teal-digest" | "amber-memo";
+
+const VISUAL_SHEET_STYLES: Array<{
+  id: VisualSheetStyleVariant;
+  background: string;
+  ink: string;
+  paper: string;
+  teal: string;
+  amber: string;
+}> = [
+  { id: "classic", background: "#F4E8CF", ink: "#17211F", paper: "#FFFDF8", teal: "#0F766E", amber: "#D89A2B" },
+  { id: "warm-card", background: "#F7E2BC", ink: "#1F2320", paper: "#FFF9EC", teal: "#146B63", amber: "#B87818" },
+  { id: "teal-digest", background: "#E4F0EC", ink: "#13211F", paper: "#F8FFFC", teal: "#0B6F68", amber: "#C98F24" },
+  { id: "amber-memo", background: "#FFF1D6", ink: "#1C2522", paper: "#FFFDF8", teal: "#1C6F68", amber: "#D28A12" }
+];
+
+export const VISUAL_SHEET_STYLE_COUNT = VISUAL_SHEET_STYLES.length;
 
 const SHEET_GROUPS: Array<{
   kind: VisualPanelKind;
@@ -56,12 +78,14 @@ const SHEET_GROUPS: Array<{
 
 export function buildVisualBriefSheetPlans(
   panels: VisualBriefPanelDraft[],
-  illustrationUrls: string[]
+  illustrationUrls: string[],
+  runKey?: string
 ): VisualBriefSheetPlan[] {
   if (panels.length !== 10) {
     throw new Error(`Expected 10 editorial panels, received ${panels.length}`);
   }
   const fallbackIllustration = illustrationUrls[0] ?? "";
+  const style = visualSheetStyle(runKey);
 
   return SHEET_GROUPS.map((group, index) => {
     const groupedPanels = group.panelIndexes.map((panelIndex) => panels[panelIndex]);
@@ -69,6 +93,7 @@ export function buildVisualBriefSheetPlans(
       index: index + 1,
       kind: group.kind,
       variant: group.variant,
+      styleVariant: style.id,
       title: group.title,
       width: 1080,
       height: sheetHeight(group.variant, groupedPanels),
@@ -76,11 +101,33 @@ export function buildVisualBriefSheetPlans(
       panelNumbers: group.panelIndexes,
       panels: groupedPanels,
       theme: {
-        background: "#F4E8CF",
-        ink: "#17211F"
+        background: style.background,
+        ink: style.ink,
+        paper: style.paper,
+        teal: style.teal,
+        amber: style.amber
       }
     };
   });
+}
+
+export function visualSheetStyleVariant(runKey?: string): VisualSheetStyleVariant {
+  return visualSheetStyle(runKey).id;
+}
+
+function visualSheetStyle(runKey?: string) {
+  const key = runKey ?? "";
+  const numericSuffix = key.match(/(\d+)$/u)?.[1];
+  const index = numericSuffix ? Number(numericSuffix) % VISUAL_SHEET_STYLE_COUNT : hashText(key) % VISUAL_SHEET_STYLE_COUNT;
+  return VISUAL_SHEET_STYLES[index] ?? VISUAL_SHEET_STYLES[0];
+}
+
+function hashText(value: string): number {
+  let hash = 0;
+  for (const character of value) {
+    hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
+  }
+  return hash;
 }
 
 function sheetHeight(
@@ -89,7 +136,7 @@ function sheetHeight(
 ): number {
   const bodyLineCount = panels.reduce(
     (total, panel) =>
-      total + panel.body.reduce((lineTotal, line) => lineTotal + estimateVisualLineCount(line, 29), 0),
+      total + panel.body.reduce((lineTotal, line) => lineTotal + estimateVisualLineCount(line, 21), 0),
     0
   );
   const titleLineCount = panels.reduce(
@@ -97,13 +144,13 @@ function sheetHeight(
     0
   );
   const heightProfile = {
-    cover: { base: 1700, min: 2100, max: 4600 },
-    analysis: { base: 1500, min: 2200, max: 6000 },
-    radar: { base: 1380, min: 2200, max: 6000 },
-    takeaway: { base: 1300, min: 1800, max: 4000 }
+    cover: { base: 1900, min: 2400, max: 5600 },
+    analysis: { base: 1740, min: 2600, max: 7200 },
+    radar: { base: 1640, min: 2600, max: 7200 },
+    takeaway: { base: 1500, min: 2200, max: 5000 }
   }[variant];
   return clamp(
-    heightProfile.base + bodyLineCount * 52 + titleLineCount * 62,
+    heightProfile.base + bodyLineCount * 72 + titleLineCount * 66,
     heightProfile.min,
     heightProfile.max
   );
