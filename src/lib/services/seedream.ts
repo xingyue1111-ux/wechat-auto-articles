@@ -148,7 +148,7 @@ async function generateOneImage(input: {
     status: "failed",
     detail: lastError
   });
-  throw new Error(`Seedream 配图 ${input.index}/${input.total} 生成失败：${lastError}`);
+  return placeholderImage(input.runId, input.prompt, input.index);
 }
 
 function placeholderImage(runId: string, prompt: string, index: number): GeneratedSeedreamImage {

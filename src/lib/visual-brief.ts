@@ -41,19 +41,30 @@ export function normalizeVisualBriefWithDiagnostics(
 ): { brief: VisualBriefDraft; usedFallback: boolean; reason?: string } {
   try {
     const parsed = JSON.parse(stripJsonFence(raw)) as Partial<VisualBriefDraft>;
+    const fallback = buildFallbackVisualBrief(context);
     const panels = Array.isArray(parsed.panels)
       ? parsed.panels.map(normalizePanel).filter((panel): panel is VisualBriefPanelDraft => panel !== null)
       : [];
-    if (!parsed.title || !hasRequiredPanelOrder(panels) || !hasValidWechatArticleLength(panels)) {
+    if (!hasRepairablePanelOrder(panels)) {
       return {
-        brief: buildFallbackVisualBrief(context),
+        brief: fallback,
         usedFallback: true,
         reason: "DeepSeek JSON 缺少标题、没有严格返回固定 10 屏结构，或正文不在 1400-1600 字范围内"
       };
     }
-    const fallback = buildFallbackVisualBrief(context);
-    const normalizedPanels = panels.map((panel, index) => ensureReaderFacingChinese(panel, fallback.panels[index]));
-    const title = resolveArticleTitle(String(parsed.title), normalizedPanels, fallback.title);
+    const repairedOrderPanels = repairPanelOrder(panels, fallback.panels);
+    const normalizedPanels = repairWechatArticleLength(
+      repairedOrderPanels.map((panel, index) => ensureReaderFacingChinese(panel, fallback.panels[index])),
+      fallback.panels
+    );
+    if (!hasRequiredPanelOrder(normalizedPanels) || !hasValidWechatArticleLength(normalizedPanels)) {
+      return {
+        brief: fallback,
+        usedFallback: true,
+        reason: "DeepSeek JSON 缺少标题、没有严格返回固定 10 屏结构，或正文不在 1400-1600 字范围内"
+      };
+    }
+    const title = resolveArticleTitle(String(parsed.title ?? ""), normalizedPanels, fallback.title);
     if (!isSpecificArticleTitle(normalizedPanels[0].title)) {
       normalizedPanels[0] = {
         ...normalizedPanels[0],
@@ -307,9 +318,96 @@ function hasRequiredPanelOrder(panels: Array<{ kind: VisualPanelKind }>): boolea
   );
 }
 
+function hasRepairablePanelOrder(panels: Array<{ kind: VisualPanelKind }>): boolean {
+  return (
+    panels.length > 0 &&
+    panels.length <= REQUIRED_VISUAL_PANEL_KINDS.length &&
+    panels.every((panel, index) => panel.kind === REQUIRED_VISUAL_PANEL_KINDS[index])
+  );
+}
+
+function repairPanelOrder(
+  panels: VisualBriefPanelDraft[],
+  fallbackPanels: VisualBriefPanelDraft[]
+): VisualBriefPanelDraft[] {
+  return REQUIRED_VISUAL_PANEL_KINDS.map((kind, index) => {
+    const panel = panels[index];
+    const fallback = fallbackPanels[index];
+    if (!panel || panel.kind !== kind) {
+      return fallback;
+    }
+    return {
+      ...fallback,
+      ...panel,
+      kind,
+      kicker: panel.kicker || fallback.kicker,
+      title: panel.title || fallback.title,
+      body: panel.body.length ? panel.body : fallback.body,
+      imagePrompt: panel.imagePrompt || fallback.imagePrompt,
+      sourceUrls: panel.sourceUrls.length ? panel.sourceUrls : fallback.sourceUrls
+    };
+  });
+}
+
 function hasValidWechatArticleLength(panels: VisualBriefPanelDraft[]): boolean {
   const length = countWechatArticleCharacters(panels);
   return length >= 1400 && length <= 1600;
+}
+
+function repairWechatArticleLength(
+  panels: VisualBriefPanelDraft[],
+  fallbackPanels: VisualBriefPanelDraft[]
+): VisualBriefPanelDraft[] {
+  const fitted = panels.map((panel) => ({ ...panel, body: [...panel.body] }));
+  const currentLength = countWechatArticleCharacters(fitted);
+  if (currentLength < 1400) {
+    return padWechatArticleLength(fitted, fallbackPanels);
+  }
+  if (currentLength > 1600) {
+    return trimWechatArticleLength(fitted);
+  }
+  return fitted;
+}
+
+function padWechatArticleLength(
+  panels: VisualBriefPanelDraft[],
+  fallbackPanels: VisualBriefPanelDraft[]
+): VisualBriefPanelDraft[] {
+  const targetLength = 1500;
+  for (const [index, fallbackPanel] of fallbackPanels.entries()) {
+    if (countWechatArticleCharacters(panels) >= 1400) {
+      break;
+    }
+    const targetPanel = panels[index];
+    const fallbackText = fallbackPanel.body.join("");
+    if (!targetPanel || !fallbackText) {
+      continue;
+    }
+    const remaining = targetLength - countWechatArticleCharacters(panels);
+    if (remaining <= 0) {
+      break;
+    }
+    targetPanel.body.push(fallbackText.slice(0, remaining));
+  }
+  return panels;
+}
+
+function trimWechatArticleLength(panels: VisualBriefPanelDraft[]): VisualBriefPanelDraft[] {
+  let overflow = countWechatArticleCharacters(panels) - 1600;
+  for (let panelIndex = panels.length - 1; panelIndex >= 0 && overflow > 0; panelIndex -= 1) {
+    const panel = panels[panelIndex];
+    for (let bodyIndex = panel.body.length - 1; bodyIndex >= 0 && overflow > 0; bodyIndex -= 1) {
+      const line = panel.body[bodyIndex];
+      if (line.length > overflow) {
+        panel.body[bodyIndex] = line.slice(0, line.length - overflow);
+        overflow = 0;
+      } else if (panel.body.length > 1) {
+        panel.body.splice(bodyIndex, 1);
+        overflow -= line.length;
+      }
+    }
+  }
+  return panels;
 }
 
 function hasRequiredManifestSheetOrder(panels: Array<{ kind: VisualPanelKind }>): boolean {
@@ -332,7 +430,7 @@ function normalizePanel(value: unknown): VisualBriefPanelDraft | null {
     kind,
     kicker: String(panel.kicker ?? labelForKind(kind)),
     title: String(panel.title),
-    body: Array.isArray(panel.body) ? panel.body.map(String).filter(Boolean).slice(0, 4) : [],
+    body: Array.isArray(panel.body) ? panel.body.map(String).filter(Boolean) : [],
     imagePrompt: String(panel.imagePrompt ?? `retrofuturistic vector illustration for ${panel.title}`),
     sourceUrls: Array.isArray(panel.sourceUrls) ? panel.sourceUrls.map(String).filter(Boolean) : []
   };
@@ -419,6 +517,8 @@ function isGenericArticleTitle(value: string): boolean {
   return [
     "企业ai落地信号图",
     "企业ai日报",
+    "ai应用日报",
+    "ai产业观察",
     "本期总标题",
     "今日脉络",
     "重点信号",

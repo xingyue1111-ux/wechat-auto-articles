@@ -21,7 +21,7 @@ describe("DeepSeek visual brief generation", () => {
 
     expect(requestBody?.response_format).toEqual({ type: "json_object" });
     expect(requestBody?.temperature).toBe(0.2);
-    expect(requestBody?.max_tokens).toBe(8000);
+    expect(requestBody?.max_tokens).toBeGreaterThan(8000);
   });
 
   it("reports truncated DeepSeek output before JSON parsing", async () => {

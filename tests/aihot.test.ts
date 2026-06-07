@@ -60,11 +60,22 @@ describe("AI HOT ingestion", () => {
     expect(agents[0]).toBe(AIHOT_BROWSER_USER_AGENT);
   });
 
-  it("keeps the strict 24h window even when the result has too few items", async () => {
+  it("falls back to a broader 7d AI HOT window when strict 24h has too few items", async () => {
     const urls: string[] = [];
+    let calls = 0;
     const fetcher = async (input: RequestInfo | URL) => {
       urls.push(String(input));
-      return Response.json({ items: [], nextCursor: null });
+      calls += 1;
+      if (calls === 1) {
+        return Response.json({ items: [], nextCursor: null });
+      }
+      return Response.json({
+        items: [
+          { id: "fallback-1", title: "Multimodal model release", url: "https://example.com/fallback-1" },
+          { id: "fallback-2", title: "AI product update", url: "https://example.com/fallback-2" }
+        ],
+        nextCursor: null
+      });
     };
 
     const result = await fetchAihotWithFallback({
@@ -73,9 +84,10 @@ describe("AI HOT ingestion", () => {
       fetcher
     });
 
-    expect(result.sourceWindow).toBe("24h");
-    expect(result.items).toHaveLength(0);
+    expect(result.sourceWindow).toBe("7d");
+    expect(result.items.map((item) => item.externalId)).toEqual(["fallback-1", "fallback-2"]);
     expect(urls[0]).toContain("since=2026-05-28T12%3A00%3A00.000Z");
-    expect(urls).toHaveLength(1);
+    expect(urls[1]).toContain("mode=all");
+    expect(urls[1]).toContain("since=2026-05-22T12%3A00%3A00.000Z");
   });
 });

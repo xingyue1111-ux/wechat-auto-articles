@@ -49,8 +49,12 @@ export async function fetchHackerNewsItems(options: {
 
   return stories
     .flatMap((result) => (result.status === "fulfilled" && result.value ? [result.value] : []))
-    .filter((item) => scoreEnterpriseRelevance(item) > 0)
-    .sort((left, right) => scoreEnterpriseRelevance(right) - scoreEnterpriseRelevance(left))
+    .sort((left, right) => scoreHackerNewsCandidate(right) - scoreHackerNewsCandidate(left))
     .slice(0, options.limit ?? 15);
 }
 
+function scoreHackerNewsCandidate(item: NormalizedContentItem): number {
+  const publishedAt = new Date(item.publishedAt).getTime();
+  const freshness = Number.isFinite(publishedAt) ? publishedAt / 1_000_000_000_000 : 0;
+  return scoreEnterpriseRelevance(item) * 100 + freshness;
+}

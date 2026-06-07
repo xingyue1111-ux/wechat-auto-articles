@@ -17,6 +17,7 @@ import {
   collectEnterpriseAiCandidates,
   type ContentSourceCollector
 } from "@/lib/content-sources/aggregate";
+import { fetchHackerNewsItems } from "@/lib/content-sources/hacker-news";
 
 describe("enterprise AI content utilities", () => {
   it("dedupes cross-source items by normalized URL and title", () => {
@@ -39,6 +40,18 @@ describe("enterprise AI content utilities", () => {
     const generic = item("Hacker News", "generic", "AI image demo", "https://example.com/demo");
 
     expect(scoreEnterpriseRelevance(workflow)).toBeGreaterThan(scoreEnterpriseRelevance(generic));
+  });
+
+  it("scores broad AI application and industry signals", () => {
+    const applicationSignal = item(
+      "AI HOT",
+      "application",
+      "Multimodal model release adds video generation and open source inference tools",
+      "https://example.com/application"
+    );
+    const unrelated = item("AI HOT", "unrelated", "Celebrity gossip", "https://example.com/gossip");
+
+    expect(scoreEnterpriseRelevance(applicationSignal)).toBeGreaterThan(scoreEnterpriseRelevance(unrelated));
   });
 
   it("compresses candidates while preserving source diversity", () => {
@@ -227,6 +240,38 @@ describe("multisource aggregation", () => {
     expect(result.sourceStats.map((source) => source.count)).toEqual([20, 20, 20, 20, 20]);
   });
 
+  it("keeps a source's latest candidates when the strict 24h filter would empty it", async () => {
+    const now = new Date("2026-06-07T13:30:00.000Z");
+    const result = await collectEnterpriseAiCandidates({
+      collectors: [
+        collector("hugging-face", "Hugging Face Daily Papers", [
+          { ...item("Hugging Face Daily Papers", "paper-1", "Agent evaluation benchmark", "https://example.com/paper-1"), publishedAt: "2026-06-05T00:00:00.000Z" },
+          { ...item("Hugging Face Daily Papers", "paper-2", "Workflow memory for agents", "https://example.com/paper-2"), publishedAt: "2026-06-04T00:00:00.000Z" }
+        ])
+      ],
+      now
+    });
+
+    expect(result.items.map((entry) => entry.externalId).sort()).toEqual(["paper-1", "paper-2"]);
+    expect(result.sourceStats[0].count).toBe(2);
+  });
+
+  it("reports a 7d source window when any source had to broaden its fallback window", async () => {
+    const result = await collectEnterpriseAiCandidates({
+      collectors: [{
+        id: "aihot",
+        label: "AI HOT",
+        collect: async () => ({
+          sourceWindow: "7d",
+          items: [item("AI HOT", "broader", "Multimodal model release", "https://example.com/broader")]
+        })
+      }],
+      now: new Date("2026-06-07T13:30:00.000Z")
+    });
+
+    expect(result.sourceWindow).toBe("7d");
+  });
+
   it("excludes links from the previous brief when fresh alternatives remain", async () => {
     const now = new Date("2026-05-31T12:00:00.000Z");
     const previousUrl = "https://example.com/previous";
@@ -253,6 +298,42 @@ describe("multisource aggregation", () => {
     ], 2, now);
 
     expect(ranked.map((entry) => entry.externalId)).toEqual(["newer", "older"]);
+  });
+
+  it("backfills Hacker News with generic AI stories after enterprise-scored stories", async () => {
+    const responses = new Map<string, unknown>([
+      ["https://hacker-news.firebaseio.com/v0/topstories.json", [1, 2, 3]],
+      ["https://hacker-news.firebaseio.com/v0/item/1.json", {
+        id: 1,
+        type: "story",
+        title: "Agent workflow permissions",
+        url: "https://example.com/agent",
+        time: 1780000000
+      }],
+      ["https://hacker-news.firebaseio.com/v0/item/2.json", {
+        id: 2,
+        type: "story",
+        title: "New open model discussion",
+        url: "https://example.com/model",
+        time: 1780000001
+      }],
+      ["https://hacker-news.firebaseio.com/v0/item/3.json", {
+        id: 3,
+        type: "story",
+        title: "AI product launch",
+        url: "https://example.com/product",
+        time: 1780000002
+      }]
+    ]);
+    const fetcher = async (url: string) => ({
+      ok: true,
+      json: async () => responses.get(url)
+    }) as Response;
+
+    const items = await fetchHackerNewsItems({ fetcher, limit: 3, scanLimit: 3 });
+
+    expect(items[0].externalId).toBe("1");
+    expect(items.map((entry) => entry.externalId).sort()).toEqual(["1", "2", "3"]);
   });
 });
 

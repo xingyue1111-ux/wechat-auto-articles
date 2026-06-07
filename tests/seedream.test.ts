@@ -46,22 +46,26 @@ describe("Seedream image generation", () => {
     expect(maxActive).toBe(3);
   });
 
-  it("retries once and aborts the run after a second generation failure", async () => {
+  it("retries once and falls back to a placeholder after a second generation failure", async () => {
     process.env.ARK_API_KEY = "test-api-key";
     process.env.ARK_SEEDREAM_MODEL = "test-model";
     let attempts = 0;
+    const statuses: string[] = [];
     vi.stubGlobal("fetch", async () => {
       attempts += 1;
       return Response.json({ error: { message: "upstream unavailable" } }, { status: 503 });
     });
 
-    await expect(generateSeedreamImages({
+    const images = await generateSeedreamImages({
       runId: "2026-05-30",
       prompts: ["prompt"],
-      retryDelayMs: 0
-    })).rejects.toThrow("Seedream 配图 1/1 生成失败");
+      retryDelayMs: 0,
+      onProgress: (event) => statuses.push(event.status)
+    });
 
     expect(attempts).toBe(2);
+    expect(statuses).toContain("failed");
+    expect(images[0].url).toContain("data:image/svg+xml;base64");
   });
 
   it("sends an abort signal with every Seedream request", async () => {

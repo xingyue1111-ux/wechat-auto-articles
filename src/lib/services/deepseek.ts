@@ -2,7 +2,7 @@ import { optionalEnv } from "@/lib/env";
 import { upstreamError } from "@/lib/server/generation-progress";
 
 const MODEL = "deepseek-v4-pro";
-const MAX_TOKENS = 8000;
+const MAX_TOKENS = 12000;
 
 export async function generateWithDeepSeek(input: {
   system: string;

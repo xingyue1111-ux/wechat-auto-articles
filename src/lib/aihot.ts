@@ -121,12 +121,27 @@ export async function fetchAihotWithFallback(
   options: FetchAihotFallbackOptions = {}
 ): Promise<{ sourceWindow: SourceWindow; items: NormalizedContentItem[] }> {
   const now = options.now ?? new Date();
+  const minItems = options.minItems ?? 5;
   const recentItems = await fetchSelectedAihotItems({
     ...options,
     mode: "selected",
     take: options.take ?? 50,
     since: hoursAgo(now, 24)
   });
+
+  if (recentItems.length >= minItems) {
+    return { sourceWindow: "24h", items: recentItems };
+  }
+
+  const broaderItems = await fetchSelectedAihotItems({
+    ...options,
+    mode: "all",
+    take: options.take ?? 50,
+    since: hoursAgo(now, 24 * 7)
+  });
+  if (broaderItems.length) {
+    return { sourceWindow: "7d", items: broaderItems };
+  }
 
   return { sourceWindow: "24h", items: recentItems };
 }

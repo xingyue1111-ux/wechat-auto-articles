@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildFallbackVisualBrief,
   normalizeVisualBrief,
+  normalizeVisualBriefWithDiagnostics,
   panelBlobPath,
   validateVisualBriefManifest
 } from "@/lib/visual-brief";
@@ -92,6 +93,25 @@ describe("visual brief generation", () => {
     expect(brief.panels[0].title).toBe("攻击者智能化：AI 恶意账户风险飙升");
   });
 
+  it("replaces broad AI placeholder titles with a concrete section title", () => {
+    const panels = validPanelsForTitleTest();
+    panels[0].title = "AI 应用日报";
+    panels[2].title = "多模态应用正在从演示走向日常工具";
+
+    const brief = normalizeVisualBrief(JSON.stringify({
+      title: "AI 应用日报",
+      subtitle: "把公开信号变成可理解的应用判断",
+      panels
+    }), {
+      date: "2026-06-07",
+      sourceWindow: "24h",
+      items: [item("1", "Multimodal model update", "AI application signal")]
+    });
+
+    expect(brief.title).toBe("多模态应用正在从演示走向日常工具");
+    expect(brief.panels[0].title).toBe("多模态应用正在从演示走向日常工具");
+  });
+
   it("does not expose raw English headlines in fallback reader copy", () => {
     const brief = buildFallbackVisualBrief({
       date: "2026-05-29",
@@ -115,6 +135,55 @@ describe("visual brief generation", () => {
 
     expect(bodyLength).toBeGreaterThanOrEqual(1400);
     expect(bodyLength).toBeLessThanOrEqual(1600);
+  });
+
+  it("repairs a missing top-level title from concrete model panels instead of falling back", () => {
+    const panels = modelArticlePanels({ charsPerPanel: 150 });
+    const normalized = normalizeVisualBriefWithDiagnostics(JSON.stringify({
+      subtitle: "把公开信号变成可执行判断",
+      panels
+    }), {
+      date: "2026-06-07",
+      sourceWindow: "24h",
+      items: [item("1", "兜底标题不应该被使用", "兜底摘要")]
+    });
+
+    expect(normalized.usedFallback).toBe(false);
+    expect(normalized.brief.title).toBe("智能体权限治理进入交付阶段");
+    expect(normalized.brief.panels).toHaveLength(10);
+  });
+
+  it("pads slightly short model articles to the required publishing length instead of falling back", () => {
+    const normalized = normalizeVisualBriefWithDiagnostics(JSON.stringify({
+      title: "智能体权限治理进入交付阶段",
+      subtitle: "把公开信号变成可执行判断",
+      panels: modelArticlePanels({ charsPerPanel: 120 })
+    }), {
+      date: "2026-06-07",
+      sourceWindow: "24h",
+      items: [item("1", "兜底标题不应该被使用", "兜底摘要")]
+    });
+    const bodyLength = normalized.brief.panels.flatMap((panel) => panel.body).join("").length;
+
+    expect(normalized.usedFallback).toBe(false);
+    expect(normalized.brief.title).toBe("智能体权限治理进入交付阶段");
+    expect(bodyLength).toBeGreaterThanOrEqual(1400);
+    expect(bodyLength).toBeLessThanOrEqual(1600);
+  });
+
+  it("does not truncate valid model article paragraphs before length validation", () => {
+    const normalized = normalizeVisualBriefWithDiagnostics(JSON.stringify({
+      title: "智能体权限治理进入交付阶段",
+      subtitle: "把公开信号变成可执行判断",
+      panels: modelArticlePanels({ linesPerPanel: 5, charsPerLine: 30 })
+    }), {
+      date: "2026-06-07",
+      sourceWindow: "24h",
+      items: [item("1", "兜底标题不应该被使用", "兜底摘要")]
+    });
+
+    expect(normalized.usedFallback).toBe(false);
+    expect(normalized.brief.panels[2].body).toHaveLength(5);
   });
 
   it("keeps manifest order and blob paths stable", () => {
@@ -286,6 +355,42 @@ function validPanelsForTitleTest() {
     imagePrompt: `enterprise workflow section ${index + 1}`,
     sourceUrls: [`https://example.com/${index + 1}`]
   }));
+}
+
+function modelArticlePanels(options: { charsPerPanel?: number; linesPerPanel?: number; charsPerLine?: number }) {
+  const kinds = ["cover", "context", "news", "news", "news", "news", "news", "news", "takeaway", "footer"];
+  const titles = [
+    "智能体权限治理进入交付阶段",
+    "从演示热度走向流程治理",
+    "企业开始追问权限边界",
+    "交付标准正在发生变化",
+    "工具链需要可审计记录",
+    "安全和效率必须同时计算",
+    "先从高频流程做小试验",
+    "把异常处理写进流程",
+    "先管住边界再扩大规模",
+    "发布前保留人工校对"
+  ];
+  return kinds.map((kind, index) => ({
+    kind,
+    kicker: `板块 ${index + 1}`,
+    title: titles[index],
+    body: modelBody(options),
+    imagePrompt: `enterprise AI workflow panel ${index + 1}`,
+    sourceUrls: [`https://example.com/model-${index + 1}`]
+  }));
+}
+
+function modelBody(options: { charsPerPanel?: number; linesPerPanel?: number; charsPerLine?: number }) {
+  const base = "企业智能体落地不能只看模型能力，还要看权限、流程、审计、异常恢复和人工验收是否能稳定闭环。";
+  if (options.linesPerPanel && options.charsPerLine) {
+    return Array.from({ length: options.linesPerPanel }, () => repeatToLength(base, options.charsPerLine));
+  }
+  return [repeatToLength(base, options.charsPerPanel ?? 150)];
+}
+
+function repeatToLength(value: string, length: number): string {
+  return value.repeat(Math.ceil(length / value.length)).slice(0, length);
 }
 
 function item(id: string, title: string, summary: string): NormalizedContentItem {

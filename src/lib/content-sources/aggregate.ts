@@ -38,6 +38,7 @@ export type ContentSourceStat = {
 };
 
 const SOURCE_ITEM_LIMIT = 20;
+const SOURCE_MIN_CANDIDATES = 5;
 
 export async function collectEnterpriseAiCandidates(options: {
   now?: Date;
@@ -60,7 +61,7 @@ export async function collectEnterpriseAiCandidates(options: {
       try {
         const output = await collector.collect(now);
         const normalized = Array.isArray(output) ? { items: output } : output;
-        const recentItems = filterItemsWithinHours(normalized.items, now, 24).slice(0, SOURCE_ITEM_LIMIT);
+        const recentItems = selectSourceCandidates(normalized.items, now);
         options.onProgress?.({
           id: collector.id,
           label: collector.label,
@@ -121,7 +122,7 @@ export async function collectEnterpriseAiCandidates(options: {
   });
 
   return {
-    sourceWindow: "24h",
+    sourceWindow: successes.some((result) => result.sourceWindow === "7d") ? "7d" : "24h",
     items,
     failures,
     sourceStats: successes.map(({ collector, items }) => ({
@@ -164,4 +165,22 @@ export function createDefaultCollectors(): ContentSourceCollector[] {
       collect: (now) => fetchGithubReleaseItems({ now, limit: 20 })
     }
   ];
+}
+
+function selectSourceCandidates(items: NormalizedContentItem[], now: Date): NormalizedContentItem[] {
+  const recent = filterItemsWithinHours(items, now, 24).slice(0, SOURCE_ITEM_LIMIT);
+  if (recent.length >= Math.min(SOURCE_MIN_CANDIDATES, items.length)) {
+    return recent;
+  }
+
+  const latest = [...items].sort((left, right) => {
+    const leftTime = new Date(left.publishedAt).getTime();
+    const rightTime = new Date(right.publishedAt).getTime();
+    return safeTime(rightTime) - safeTime(leftTime);
+  });
+  return dedupeContentItems([...recent, ...latest]).slice(0, SOURCE_ITEM_LIMIT);
+}
+
+function safeTime(value: number): number {
+  return Number.isFinite(value) ? value : 0;
 }
