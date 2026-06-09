@@ -13,7 +13,7 @@ export function createAdminSessionToken(password: string): string {
 export function isValidAdminPassword(password: string): boolean {
   const expected = optionalEnv("ADMIN_PASSWORD");
   if (!expected) {
-    return password === "admin";
+    return allowsLocalAdminFallback() && password === "admin";
   }
   return timingSafeTextEqual(password, expected);
 }
@@ -40,11 +40,15 @@ export async function hasValidAdminSession(): Promise<boolean> {
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   if (!expected) {
-    return true;
+    return allowsLocalAdminFallback();
   }
 
   const expectedToken = createAdminSessionToken(expected);
   return Boolean(token && timingSafeTextEqual(token, expectedToken));
+}
+
+function allowsLocalAdminFallback(): boolean {
+  return process.env.NODE_ENV !== "production";
 }
 
 function timingSafeTextEqual(left: string, right: string): boolean {

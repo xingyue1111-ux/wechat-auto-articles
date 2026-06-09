@@ -19,6 +19,24 @@ describe("admin generation form", () => {
     expect(source).toContain('if (!timestamp) return "--:--:--"');
   });
 
+  it("provides a source preflight check before generation", async () => {
+    const componentSource = await readFile(
+      path.join(process.cwd(), "src", "components", "generate-brief-form.tsx"),
+      "utf8"
+    );
+    const routeSource = await readFile(
+      path.join(process.cwd(), "src", "app", "api", "admin", "preflight", "route.ts"),
+      "utf8"
+    );
+
+    expect(componentSource).toContain("/api/admin/preflight");
+    expect(componentSource).toContain("生成前预检");
+    expect(componentSource).toContain("preflight-card");
+    expect(routeSource).toContain("collectEnterpriseAiCandidates");
+    expect(routeSource).toContain("candidateCount");
+    expect(routeSource).toContain("sourceStats");
+  });
+
   it("lists all five public signal sources", async () => {
     const source = await readFile(path.join(process.cwd(), "src", "app", "admin", "page.tsx"), "utf8");
 
@@ -77,6 +95,18 @@ describe("admin generation form", () => {
     expect(source).toContain("避免公众号发布后外链图片消失");
     expect(source).toContain("下载图");
     expect(source).toContain("备用长图");
+  });
+
+  it("shows a four-image manual upload checklist in the publishing workbench", async () => {
+    const source = await readFile(
+      path.join(process.cwd(), "src", "components", "wechat-publishing-workbench.tsx"),
+      "utf8"
+    );
+
+    expect(source).toContain("uploadChecklist");
+    expect(source).toContain("发布前检查");
+    expect(source).toContain("已上传配图");
+    expect(source).toContain("全部 4 张配图已确认");
   });
 
   it("redirects completed generation to the publishing workbench", async () => {

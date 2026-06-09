@@ -8,10 +8,11 @@ export async function POST(request: Request) {
   const cronSecret = optionalEnv("CRON_SECRET");
   const auth = request.headers.get("authorization");
   const password = request.headers.get("x-admin-password");
+  const allowLocalNoSecret = process.env.NODE_ENV !== "production" && !adminPassword && !cronSecret;
   const allowed =
     (adminPassword && password === adminPassword) ||
     (cronSecret && auth === `Bearer ${cronSecret}`) ||
-    (!adminPassword && !cronSecret);
+    allowLocalNoSecret;
 
   if (!allowed) {
     return new Response("Unauthorized", { status: 401 });

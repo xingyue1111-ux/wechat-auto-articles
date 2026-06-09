@@ -13,6 +13,9 @@ export function WechatPublishingWorkbench({
 }) {
   const previewRef = useRef<HTMLElement>(null);
   const [copyStatus, setCopyStatus] = useState<"idle" | "success" | "error">("idle");
+  const [uploadChecklist, setUploadChecklist] = useState<Record<number, boolean>>({});
+  const illustrations = manifest.illustrations ?? [];
+  const uploadedCount = illustrations.filter((image) => uploadChecklist[image.index]).length;
 
   async function copyWechatArticle() {
     try {
@@ -30,6 +33,13 @@ export function WechatPublishingWorkbench({
     } catch {
       setCopyStatus("error");
     }
+  }
+
+  function toggleUploaded(index: number) {
+    setUploadChecklist((current) => ({
+      ...current,
+      [index]: !current[index]
+    }));
   }
 
   return (
@@ -58,7 +68,7 @@ export function WechatPublishingWorkbench({
         />
         <aside className="publishing-assets">
           <h2>Seedream 配图</h2>
-          {(manifest.illustrations ?? []).map((image) => (
+          {illustrations.map((image) => (
             <a
               className="button secondary compact"
               href={image.imageUrl}
@@ -70,6 +80,21 @@ export function WechatPublishingWorkbench({
               下载图 {image.index}
             </a>
           ))}
+          <section className="publish-checklist" aria-label="发布前检查">
+            <h2>发布前检查</h2>
+            <p className="form-note">已上传配图 {uploadedCount}/4</p>
+            {illustrations.map((image) => (
+              <label className="upload-check-item" key={`upload-${image.index}`}>
+                <input
+                  type="checkbox"
+                  checked={Boolean(uploadChecklist[image.index])}
+                  onChange={() => toggleUploaded(image.index)}
+                />
+                <span>已上传配图 {image.index}</span>
+              </label>
+            ))}
+            {uploadedCount === 4 ? <p className="form-note">全部 4 张配图已确认</p> : null}
+          </section>
           <h2>备用长图</h2>
           {manifest.panels.map((panel) => (
             <a className="button secondary compact" href={panel.imageUrl} target="_blank" rel="noreferrer" key={panel.index}>

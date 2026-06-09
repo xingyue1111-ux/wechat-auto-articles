@@ -11,9 +11,11 @@ describe("DeepSeek visual brief generation", () => {
 
   it("requests deterministic JSON output for the visual brief", async () => {
     let requestBody: Record<string, unknown> | undefined;
+    let requestSignal: AbortSignal | null | undefined;
     process.env.DEEPSEEK_API_KEY = "test-api-key";
     vi.stubGlobal("fetch", async (_input: RequestInfo | URL, init?: RequestInit) => {
       requestBody = JSON.parse(String(init?.body));
+      requestSignal = init?.signal;
       return Response.json({ choices: [{ message: { content: "{\"title\":\"brief\"}" } }] });
     });
 
@@ -22,6 +24,25 @@ describe("DeepSeek visual brief generation", () => {
     expect(requestBody?.response_format).toEqual({ type: "json_object" });
     expect(requestBody?.temperature).toBe(0.2);
     expect(requestBody?.max_tokens).toBeGreaterThan(8000);
+    expect(requestSignal).toBeInstanceOf(AbortSignal);
+  });
+
+  it("allows DeepSeek request timeout to be lowered by the pipeline budget", async () => {
+    let requestSignal: AbortSignal | null | undefined;
+    process.env.DEEPSEEK_API_KEY = "test-api-key";
+    vi.stubGlobal("fetch", async (_input: RequestInfo | URL, init?: RequestInit) => {
+      requestSignal = init?.signal;
+      return Response.json({ choices: [{ message: { content: "{\"title\":\"brief\"}" } }] });
+    });
+
+    await generateWithDeepSeek({
+      system: "Output json",
+      prompt: "Build brief json",
+      fallback: "{}",
+      requestTimeoutMs: 1000
+    });
+
+    expect(requestSignal).toBeInstanceOf(AbortSignal);
   });
 
   it("reports truncated DeepSeek output before JSON parsing", async () => {

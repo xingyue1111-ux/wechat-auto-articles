@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { ImagePlus, LoaderCircle, RotateCcw, Terminal, Trash2 } from "lucide-react";
 
 type ConsoleStatus = "idle" | "running" | "complete" | "error";
+type PreflightStatus = "idle" | "running" | "success" | "error";
 
 type ConsoleLog = {
   type: "log";
@@ -19,11 +20,25 @@ type StreamEvent =
   | { type: "complete"; redirectUrl: string; timestamp: string }
   | { type: "error"; message: string; detail?: string; timestamp: string };
 
+type PreflightResult = {
+  ok: boolean;
+  sourceWindow?: "24h" | "7d";
+  candidateCount?: number;
+  sourceStats?: Array<{ id: string; label: string; count: number }>;
+  failures?: Array<{ id: string; label: string; error: string }>;
+  excludedPreviousUrls?: string[];
+  sampleItems?: Array<{ title: string; source: string; category: string; publishedAt: string }>;
+  error?: string;
+};
+
 export function GenerateBriefForm() {
   const [status, setStatus] = useState<ConsoleStatus>("idle");
   const [logs, setLogs] = useState<ConsoleLog[]>([createInitialLog()]);
+  const [preflightStatus, setPreflightStatus] = useState<PreflightStatus>("idle");
+  const [preflight, setPreflight] = useState<PreflightResult | null>(null);
   const outputRef = useRef<HTMLDivElement>(null);
   const isRunning = status === "running";
+  const isChecking = preflightStatus === "running";
 
   useEffect(() => {
     outputRef.current?.scrollTo({ top: outputRef.current.scrollHeight, behavior: "smooth" });
@@ -123,6 +138,37 @@ export function GenerateBriefForm() {
     setLogs((current) => [...current, log]);
   }
 
+  async function runPreflight() {
+    if (isRunning || isChecking) {
+      return;
+    }
+
+    setPreflightStatus("running");
+    setPreflight(null);
+
+    try {
+      const response = await fetch("/api/admin/preflight", { method: "GET" });
+      const text = await response.text();
+      let data: PreflightResult;
+      try {
+        data = text ? (JSON.parse(text) as PreflightResult) : { ok: false };
+      } catch {
+        data = { ok: false, error: text };
+      }
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.error ?? (text || `预检接口返回 ${response.status} ${response.statusText}`));
+      }
+      setPreflight(data);
+      setPreflightStatus("success");
+    } catch (error) {
+      setPreflight({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      setPreflightStatus("error");
+    }
+  }
+
   function clearLogs() {
     if (!isRunning) {
       setLogs([createInitialLog()]);
@@ -133,6 +179,10 @@ export function GenerateBriefForm() {
   return (
     <div className="generate-workbench">
       <form onSubmit={startGeneration} className="generate-form">
+        <button type="button" className="button secondary" onClick={runPreflight} disabled={isRunning || isChecking}>
+          {isChecking ? <LoaderCircle className="spin" size={18} /> : <Terminal size={18} />}
+          <span style={{ marginLeft: 8 }}>{isChecking ? "预检中" : "生成前预检"}</span>
+        </button>
         <button type="submit" disabled={isRunning} aria-busy={isRunning}>
           {isRunning ? <LoaderCircle className="spin" size={18} /> : <ImagePlus size={18} />}
           <span style={{ marginLeft: 8 }}>{isRunning ? "生成中，请稍候" : "生成今日长图简报"}</span>
@@ -144,6 +194,53 @@ export function GenerateBriefForm() {
           </button>
         ) : null}
       </form>
+
+      {preflight ? (
+        <section className={`preflight-card ${preflightStatus}`} aria-label="生成前预检结果">
+          <div>
+            <strong>生成前预检</strong>
+            {preflight.ok ? (
+              <p className="form-note">
+                候选素材 {preflight.candidateCount ?? 0} 条 · 窗口{" "}
+                {preflight.sourceWindow === "7d" ? "最近 7 天兜底" : "过去 24 小时"}
+                {preflight.excludedPreviousUrls?.length
+                  ? ` · 已排除上期链接 ${preflight.excludedPreviousUrls.length} 条`
+                  : ""}
+              </p>
+            ) : (
+              <p className="form-error">{preflight.error ?? "预检失败"}</p>
+            )}
+          </div>
+
+          {preflight.sourceStats?.length ? (
+            <div className="preflight-source-grid">
+              {preflight.sourceStats.map((source) => (
+                <div className="preflight-source" key={source.id}>
+                  <span>{source.label}</span>
+                  <strong>{source.count}</strong>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          {preflight.failures?.length ? (
+            <p className="form-error">
+              {preflight.failures.map((failure) => `${failure.label}: ${failure.error}`).join("；")}
+            </p>
+          ) : null}
+
+          {preflight.sampleItems?.length ? (
+            <div className="preflight-samples">
+              {preflight.sampleItems.map((item, index) => (
+                <p key={`${item.title}-${index}`}>
+                  <span>{item.source}</span>
+                  {item.title}
+                </p>
+              ))}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
 
       <section className="output-console" aria-label="生成任务实时日志">
         <header className="output-console-header">

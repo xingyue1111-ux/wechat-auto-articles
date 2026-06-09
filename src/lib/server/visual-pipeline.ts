@@ -21,11 +21,18 @@ import { selectIllustrationPrompts } from "@/lib/visual-render/illustrations";
 import { renderSheetPng } from "@/lib/visual-render/render-sheet";
 import { buildVisualBriefSheetPlans } from "@/lib/visual-render/sheet-plan";
 
+const FUNCTION_TIME_BUDGET_MS = 300_000;
+const COMPLETION_SAFETY_MS = 35_000;
+const SEEDREAM_PHASE_TIMEOUT_MS = 105_000;
+const SEEDREAM_MIN_REMOTE_BUDGET_MS = 45_000;
+const DEEPSEEK_REQUEST_TIMEOUT_MS = 75_000;
+
 export async function generateDailyVisualBrief(input: {
   now?: Date;
   date?: string;
   onProgress?: GenerationProgressReporter;
 } = {}): Promise<VisualBriefManifest> {
+  const startedAt = Date.now();
   const now = input.now ?? new Date();
   const date = input.date ?? toShanghaiDate(now);
   const revision = buildRunRevision(now);
@@ -72,7 +79,8 @@ export async function generateDailyVisualBrief(input: {
         request: () => generateWithDeepSeek({
           system: BRIEF_SYSTEM_PROMPT,
           prompt: buildBriefPrompt(date, source.sourceWindow, source.items),
-          fallback: ""
+          fallback: "",
+          requestTimeoutMs: deepseekRequestTimeoutMs(startedAt)
         }),
         onRetry: (reason) =>
           report("running", "deepseek", "DeepSeek 首次输出未通过校验，正在重试", reason)
@@ -105,9 +113,22 @@ export async function generateDailyVisualBrief(input: {
   if (!optionalEnv("ARK_API_KEY") || !optionalEnv("ARK_SEEDREAM_MODEL")) {
     report("info", "seedream", "未配置完整 Seedream 参数，将使用本地占位配图");
   }
+  const seedreamBudgetMs = seedreamPhaseTimeoutMs(startedAt);
+  const skipRemoteSeedream = seedreamBudgetMs < SEEDREAM_MIN_REMOTE_BUDGET_MS;
+  if (skipRemoteSeedream) {
+    report(
+      "info",
+      "seedream",
+      "剩余时间不足，跳过 Seedream 真请求并使用占位配图",
+      `剩余可用预算 ${Math.max(0, seedreamBudgetMs)}ms`
+    );
+  }
   const seedreamImages = await generateSeedreamImages({
     runId: revision,
     prompts: selectIllustrationPrompts(brief.panels),
+    phaseTimeoutMs: skipRemoteSeedream ? 0 : seedreamBudgetMs,
+    requestTimeoutMs: skipRemoteSeedream ? 1 : Math.min(45_000, seedreamBudgetMs),
+    retryDelayMs: skipRemoteSeedream ? 0 : 800,
     onProgress: ({ index, total, status, detail }) => {
       if (status === "running") {
         report("running", "seedream", `Seedream 正在生成配图 ${index}/${total}`);
@@ -239,6 +260,20 @@ function emitProgress(reporter: GenerationProgressReporter | undefined, event: P
   } catch {
     // A disconnected browser must not interrupt cron or Blob persistence.
   }
+}
+
+function remainingTimeBudgetMs(startedAt: number): number {
+  return FUNCTION_TIME_BUDGET_MS - (Date.now() - startedAt);
+}
+
+function deepseekRequestTimeoutMs(startedAt: number): number {
+  const remaining = remainingTimeBudgetMs(startedAt) - COMPLETION_SAFETY_MS - SEEDREAM_MIN_REMOTE_BUDGET_MS;
+  return Math.max(1_000, Math.min(DEEPSEEK_REQUEST_TIMEOUT_MS, remaining));
+}
+
+function seedreamPhaseTimeoutMs(startedAt: number): number {
+  const remaining = remainingTimeBudgetMs(startedAt) - COMPLETION_SAFETY_MS;
+  return Math.max(0, Math.min(SEEDREAM_PHASE_TIMEOUT_MS, remaining));
 }
 
 function sourceProgressStage(
