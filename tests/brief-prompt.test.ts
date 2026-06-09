@@ -44,8 +44,8 @@ describe("AI application signal brief prompt", () => {
       }))
     );
 
-    expect(prompt).toContain('"index": 45');
-    expect(prompt).not.toContain('"index": 46');
+    expect(prompt).toContain('"index": 30');
+    expect(prompt).not.toContain('"index": 31');
     expect(prompt).not.toContain(longSummary);
   });
 

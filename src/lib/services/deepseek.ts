@@ -59,5 +59,13 @@ export async function generateWithDeepSeek(input: {
 }
 
 function isTimeoutError(error: unknown): boolean {
-  return error instanceof Error && (error.name === "AbortError" || error.name === "TimeoutError");
+  if (error instanceof Error && (error.name === "AbortError" || error.name === "TimeoutError")) {
+    return true;
+  }
+  if (typeof error === "object" && error !== null) {
+    const name = "name" in error ? String(error.name) : "";
+    const message = "message" in error ? String(error.message) : "";
+    return name === "AbortError" || name === "TimeoutError" || message.includes("aborted due to timeout");
+  }
+  return false;
 }

@@ -33,6 +33,10 @@ export async function generateVisualBriefWithRetry(input: {
       degradationReason = error instanceof Error ? error.message : String(error);
     }
 
+    if (isDeepSeekTimeout(degradationReason)) {
+      break;
+    }
+
     if (attempt < maxAttempts) {
       input.onRetry?.(degradationReason);
     }
@@ -46,4 +50,8 @@ export async function generateVisualBriefWithRetry(input: {
       degradationReason
     }
   };
+}
+
+function isDeepSeekTimeout(reason: string): boolean {
+  return reason.includes("DeepSeek 请求超时") || reason.includes("DeepSeek 璇锋眰瓒呮椂");
 }

@@ -136,6 +136,9 @@ async function generateOneImage(input: {
       };
     } catch (error) {
       lastError = describeError(error);
+      if (isTimeoutError(error)) {
+        break;
+      }
       if (attempt === 1 && input.retryDelayMs > 0) {
         await sleep(input.retryDelayMs);
       }
@@ -164,6 +167,9 @@ function storagePath(runId: string, index: number): string {
 }
 
 function describeError(error: unknown): string {
+  if (isTimeoutError(error)) {
+    return "Seedream 请求超时";
+  }
   if (error instanceof Error && error.name === "AbortError") {
     return "Seedream 请求超时";
   }
@@ -172,6 +178,18 @@ function describeError(error: unknown): string {
 
 function sleep(milliseconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+function isTimeoutError(error: unknown): boolean {
+  if (error instanceof Error && (error.name === "AbortError" || error.name === "TimeoutError")) {
+    return true;
+  }
+  if (typeof error === "object" && error !== null) {
+    const name = "name" in error ? String(error.name) : "";
+    const message = "message" in error ? String(error.message) : "";
+    return name === "AbortError" || name === "TimeoutError" || message.includes("aborted due to timeout");
+  }
+  return false;
 }
 
 function placeholderImageUrl(index: number): string {

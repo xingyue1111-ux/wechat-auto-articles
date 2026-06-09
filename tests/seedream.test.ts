@@ -68,6 +68,29 @@ describe("Seedream image generation", () => {
     expect(images[0].url).toContain("data:image/svg+xml;base64");
   });
 
+  it("does not retry the same Seedream prompt after a request timeout", async () => {
+    process.env.ARK_API_KEY = "test-api-key";
+    process.env.ARK_SEEDREAM_MODEL = "test-model";
+    let attempts = 0;
+    const statuses: string[] = [];
+    vi.stubGlobal("fetch", async () => {
+      attempts += 1;
+      throw Object.assign(new Error("The operation was aborted due to timeout"), { name: "TimeoutError" });
+    });
+
+    const images = await generateSeedreamImages({
+      runId: "2026-05-30",
+      prompts: ["prompt"],
+      retryDelayMs: 0,
+      onProgress: (event) => statuses.push(event.status)
+    });
+
+    expect(attempts).toBe(1);
+    expect(statuses).not.toContain("retrying");
+    expect(statuses).toContain("failed");
+    expect(images[0].url).toContain("data:image/svg+xml;base64");
+  });
+
   it("sends an abort signal with every Seedream request", async () => {
     process.env.ARK_API_KEY = "test-api-key";
     process.env.ARK_SEEDREAM_MODEL = "test-model";

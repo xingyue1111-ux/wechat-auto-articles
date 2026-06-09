@@ -57,4 +57,17 @@ describe("DeepSeek visual brief generation", () => {
       fallback: "{}"
     })).rejects.toThrow("DeepSeek 输出被截断");
   });
+  it("normalizes low-level timeout errors into a readable DeepSeek timeout message", async () => {
+    process.env.DEEPSEEK_API_KEY = "test-api-key";
+    vi.stubGlobal("fetch", async () => {
+      throw { name: "TimeoutError", message: "The operation was aborted due to timeout" };
+    });
+
+    await expect(generateWithDeepSeek({
+      system: "Output json",
+      prompt: "Build brief json",
+      fallback: "{}",
+      requestTimeoutMs: 1000
+    })).rejects.toThrow("DeepSeek 请求超时");
+  });
 });

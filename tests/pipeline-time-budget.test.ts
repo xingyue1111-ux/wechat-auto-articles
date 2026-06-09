@@ -14,5 +14,7 @@ describe("generation pipeline time budget", () => {
     expect(source).toContain("requestTimeoutMs:");
     expect(source).toContain("phaseTimeoutMs:");
     expect(source).toContain("skipRemoteSeedream");
+    expect(source).toContain("const DEEPSEEK_REQUEST_TIMEOUT_MS = 110_000");
+    expect(source).toContain("const SEEDREAM_REQUEST_TIMEOUT_MS = 75_000");
   });
 });

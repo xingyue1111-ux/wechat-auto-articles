@@ -23,9 +23,10 @@ import { buildVisualBriefSheetPlans } from "@/lib/visual-render/sheet-plan";
 
 const FUNCTION_TIME_BUDGET_MS = 300_000;
 const COMPLETION_SAFETY_MS = 35_000;
-const SEEDREAM_PHASE_TIMEOUT_MS = 105_000;
+const SEEDREAM_PHASE_TIMEOUT_MS = 150_000;
+const SEEDREAM_REQUEST_TIMEOUT_MS = 75_000;
 const SEEDREAM_MIN_REMOTE_BUDGET_MS = 45_000;
-const DEEPSEEK_REQUEST_TIMEOUT_MS = 75_000;
+const DEEPSEEK_REQUEST_TIMEOUT_MS = 110_000;
 
 export async function generateDailyVisualBrief(input: {
   now?: Date;
@@ -127,7 +128,7 @@ export async function generateDailyVisualBrief(input: {
     runId: revision,
     prompts: selectIllustrationPrompts(brief.panels),
     phaseTimeoutMs: skipRemoteSeedream ? 0 : seedreamBudgetMs,
-    requestTimeoutMs: skipRemoteSeedream ? 1 : Math.min(45_000, seedreamBudgetMs),
+    requestTimeoutMs: skipRemoteSeedream ? 1 : Math.min(SEEDREAM_REQUEST_TIMEOUT_MS, seedreamBudgetMs),
     retryDelayMs: skipRemoteSeedream ? 0 : 800,
     onProgress: ({ index, total, status, detail }) => {
       if (status === "running") {
