@@ -22,7 +22,7 @@ const WECHAT_ARTICLE_LAYOUTS: WechatArticleLayout[] = [
     subtitle: "margin:0 0 18px;color:#5f6b67;",
     paragraph: "margin:0 0 16px;",
     heading: "margin:28px 0 14px;border-left:4px solid #0f766e;padding-left:10px;font-size:21px;line-height:1.45;",
-    imageBox: "margin:22px 0;padding:14px 16px;border:1px dashed #9ca3af;border-radius:8px;background:#f8fafc;color:#475569;text-align:center;",
+    imageBox: "margin:22px 0;",
     imageStrong: "",
     imageHint: "font-size:13px;",
     takeaway: "margin:26px 0;border-left:4px solid #d89a2b;background:#f8f2e6;padding:16px 18px;",
@@ -35,7 +35,7 @@ const WECHAT_ARTICLE_LAYOUTS: WechatArticleLayout[] = [
     subtitle: "margin:0 0 22px;padding:0 18px 16px;background:#f8f2e6;color:#6b5f4a;",
     paragraph: "margin:0 0 17px;padding:0 4px;",
     heading: "margin:30px 0 15px;padding:10px 14px;background:#17211f;color:#fffdf8;border-radius:2px;font-size:20px;line-height:1.45;",
-    imageBox: "margin:24px 0;padding:16px;border:1px solid #d8c7a5;background:#fff8e8;color:#5f533e;text-align:center;",
+    imageBox: "margin:24px 0;",
     imageStrong: "color:#17211f;",
     imageHint: "font-size:13px;color:#706650;",
     takeaway: "margin:28px 0;padding:18px 18px;background:#f4ead6;border:1px solid #d8c7a5;",
@@ -48,7 +48,7 @@ const WECHAT_ARTICLE_LAYOUTS: WechatArticleLayout[] = [
     subtitle: "margin:0 0 22px;color:#0f766e;font-weight:600;",
     paragraph: "margin:0 0 16px;",
     heading: "margin:30px 0 14px;padding:0 0 8px;border-bottom:1px solid #b7d6d0;color:#0f766e;font-size:22px;line-height:1.45;",
-    imageBox: "margin:22px 0;padding:15px 16px;border-left:4px solid #0f766e;background:#eef8f6;color:#3f5f5a;text-align:left;",
+    imageBox: "margin:22px 0;",
     imageStrong: "color:#0f514b;",
     imageHint: "font-size:13px;color:#58736f;",
     takeaway: "margin:28px 0;padding:16px 18px;border-left:5px solid #0f766e;background:#eef8f6;",
@@ -61,7 +61,7 @@ const WECHAT_ARTICLE_LAYOUTS: WechatArticleLayout[] = [
     subtitle: "margin:0 0 22px;padding:10px 12px;background:#fff5dd;color:#7a5820;border-left:4px solid #d89a2b;",
     paragraph: "margin:0 0 16px;",
     heading: "margin:30px 0 14px;padding-left:12px;border-left:4px solid #d89a2b;color:#17211f;font-size:21px;line-height:1.45;",
-    imageBox: "margin:23px 0;padding:14px 16px;border:1px dashed #d89a2b;background:#fffaf0;color:#6a5530;text-align:center;border-radius:10px;",
+    imageBox: "margin:23px 0;",
     imageStrong: "color:#7a4f00;",
     imageHint: "font-size:13px;color:#7a6a4d;",
     takeaway: "margin:27px 0;padding:17px 18px;background:#fff5dd;border-left:5px solid #d89a2b;",
@@ -134,9 +134,8 @@ function headingHtml(text: string, layout: WechatArticleLayout): string {
 }
 
 function imageHtml(url: string | undefined, alt: string, layout: WechatArticleLayout): string {
-  const index = alt.match(/\d+/u)?.[0] ?? "1";
   return url
-    ? `<p style="${layout.imageBox}"><strong style="${layout.imageStrong}">请在此处手动上传配图 ${index}</strong><br /><span style="${layout.imageHint}">使用右侧“下载图 ${index}”保存图片，再在公众号编辑器中上传插入。不要直接使用外链图片。</span></p>`
+    ? `<p style="${layout.imageBox}"><img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}" style="display:block;width:100%;height:auto;border:0;border-radius:8px;" /></p>`
     : "";
 }
 

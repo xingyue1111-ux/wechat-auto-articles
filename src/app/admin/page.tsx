@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { CalendarDays, Eye, ImagePlus, Link2, Sparkles } from "lucide-react";
 import { GenerateBriefForm } from "@/components/generate-brief-form";
 import { articleAdminHref } from "@/lib/article-routes";
@@ -22,14 +23,14 @@ export default async function AdminPage() {
         <div>
           <p className="eyebrow">Enterprise AI Visual Brief</p>
           <h1>公众号文章生成台</h1>
-          <p className="muted">聚合五路公开信号，生成完整公众号正文、4 张 Seedream 配图和 4 张备用长图。</p>
+          <p className="muted">聚合五路公开信号，生成完整公众号正文和 4 张内嵌 Seedream 配图。</p>
         </div>
         <div className="topbar-actions">
           <a className="button secondary" href="/archive">
             <Eye size={18} />
             <span style={{ marginLeft: 8 }}>历史归档</span>
           </a>
-          <a className="button secondary" href="/latest" aria-label="查看最新长图简报">
+          <a className="button secondary" href="/latest" aria-label="查看最新文章">
             <Link2 size={18} />
             <span style={{ marginLeft: 8 }}>查看 latest</span>
           </a>
@@ -52,13 +53,13 @@ export default async function AdminPage() {
 
       <section className="panel">
         <h2>立即生成</h2>
-        <p className="muted">生成过程会抓取新闻、调用 DeepSeek 生成完整文章、调用 Seedream 生成配图，再输出可复制正文和备用 PNG 长图。</p>
+        <p className="muted">生成过程会抓取新闻、调用 DeepSeek 生成完整文章、调用 Seedream 生成配图，再输出可一键复制到公众号的正文。</p>
         <GenerateBriefForm />
       </section>
 
       <section className="panel">
         <h2>已保存简报</h2>
-        <p className="muted">每次生成完成后都会保存在 Blob。可以随时回来查看，不需要当场下载。</p>
+        <p className="muted">每次生成完成后都会保存到 Blob。可以随时回来查看，不需要当场下载。</p>
         {articles.length ? (
           <div className="article-history">
             {articles.map((article) => (
@@ -70,7 +71,7 @@ export default async function AdminPage() {
                 <div>
                   <strong>{article.date}</strong>
                   <span>{article.title}</span>
-                  <small>{generationModeLabel(article)} · 公众号 HTML · 4 张配图 · 4 张备用长图</small>
+                  <small>{generationModeLabel(article)} · 公众号 HTML · 4 张内嵌配图</small>
                 </div>
                 <a className="button secondary compact" href={articleAdminHref(article)}>
                   <Eye size={16} />
@@ -101,7 +102,7 @@ function generationModeLabel(article: Awaited<ReturnType<typeof listArticleManif
   return "生成模式未知";
 }
 
-function Metric({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function Metric({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
     <div className="metric">
       <div style={{ color: "var(--teal)", marginBottom: 10 }}>{icon}</div>

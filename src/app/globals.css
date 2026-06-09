@@ -341,31 +341,6 @@ h2 {
   margin: 10px 0 0;
 }
 
-.publish-checklist {
-  display: grid;
-  gap: 8px;
-  border-top: 1px solid var(--line);
-  padding-top: 14px;
-}
-
-.upload-check-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 9px 10px;
-  background: var(--surface);
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.upload-check-item input {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--teal);
-}
-
 .source-strip {
   display: flex;
   flex-wrap: wrap;

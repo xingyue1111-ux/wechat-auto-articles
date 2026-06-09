@@ -9,7 +9,7 @@ export function ArchivePage({ articles }: { articles: VisualBriefManifest[] }) {
         <div>
           <p className="eyebrow">Enterprise AI Visual Brief</p>
           <h1>历史归档</h1>
-          <p className="muted">每次点击生成都会保存为一篇独立文章。正文、原始配图和最终长图都保存在这里。</p>
+          <p className="muted">每次点击生成都会保存为一篇独立文章。正文、Seedream 配图和原始信号都保存在这里。</p>
         </div>
         <a className="button secondary compact" href="/admin">
           <ArrowLeft size={16} />
@@ -26,7 +26,7 @@ export function ArchivePage({ articles }: { articles: VisualBriefManifest[] }) {
                   <time dateTime={article.generatedAt}>{article.date}</time>
                   <h2>{article.title}</h2>
                   <p className="muted">{article.subtitle}</p>
-                  <small>{formatGeneratedAt(article.generatedAt)} · {article.panels.length} 张公众号长图</small>
+                  <small>{formatGeneratedAt(article.generatedAt)} · {(article.illustrations ?? []).length} 张 Seedream 配图</small>
                 </div>
                 <a className="button secondary compact" href={articleAdminHref(article)}>
                   <Images size={16} />
@@ -58,7 +58,6 @@ export function ArchivePage({ articles }: { articles: VisualBriefManifest[] }) {
                 images={article.illustrations?.map((item) => item.imageUrl) ?? []}
                 empty="该历史版本未保存原始配图。"
               />
-              <Gallery title="最终公众号长图" images={article.panels.map((panel) => panel.imageUrl)} />
               <SourceLinks panels={article.article?.panels ?? article.panels} />
             </article>
           ))}

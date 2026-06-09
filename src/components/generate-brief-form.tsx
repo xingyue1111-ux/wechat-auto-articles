@@ -185,7 +185,7 @@ export function GenerateBriefForm() {
         </button>
         <button type="submit" disabled={isRunning} aria-busy={isRunning}>
           {isRunning ? <LoaderCircle className="spin" size={18} /> : <ImagePlus size={18} />}
-          <span style={{ marginLeft: 8 }}>{isRunning ? "生成中，请稍候" : "生成今日长图简报"}</span>
+          <span style={{ marginLeft: 8 }}>{isRunning ? "生成中，请稍候" : "生成今日公众号文章"}</span>
         </button>
         {status === "error" ? (
           <button type="submit" className="button secondary" aria-label="重试生成">

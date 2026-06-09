@@ -15,11 +15,9 @@ import { readLatestManifest } from "@/lib/server/visual-manifest";
 import { generateWithDeepSeek } from "@/lib/services/deepseek";
 import { generateSeedreamImages } from "@/lib/services/seedream";
 import { putPublicBlob } from "@/lib/storage/blob";
-import { articleManifestPath, latestManifestPath, panelBlobPath } from "@/lib/storage/paths";
+import { articleManifestPath, latestManifestPath } from "@/lib/storage/paths";
 import { buildFallbackVisualBrief, validateVisualBriefManifest } from "@/lib/visual-brief";
 import { selectIllustrationPrompts } from "@/lib/visual-render/illustrations";
-import { renderSheetPng } from "@/lib/visual-render/render-sheet";
-import { buildVisualBriefSheetPlans } from "@/lib/visual-render/sheet-plan";
 
 const FUNCTION_TIME_BUDGET_MS = 300_000;
 const COMPLETION_SAFETY_MS = 35_000;
@@ -44,11 +42,11 @@ export async function generateDailyVisualBrief(input: {
     detail?: string
   ) => emitProgress(input.onProgress, createProgressLog(level, stage, message, detail));
 
-  report("info", "system", `创建 ${date} 的企业 AI 落地长图简报任务`);
+  report("info", "system", `创建 ${date} 的企业 AI 公众号文章任务`);
   report("running", "sources", "并行抓取五路公开信号源");
   const previousManifest = await readLatestManifest().catch(() => null);
   const previousSourceUrls = previousManifest
-    ? Array.from(new Set(previousManifest.panels.flatMap((panel) => panel.sourceUrls)))
+    ? manifestSourceUrls(previousManifest)
     : [];
   const source = await collectEnterpriseAiCandidates({
     now,
@@ -152,33 +150,7 @@ export async function generateDailyVisualBrief(input: {
     })
   );
 
-  const sheetPlans = buildVisualBriefSheetPlans(
-    brief.panels,
-    persistedSeedreamImages.map((image) => image.renderUrl),
-    revision
-  );
   const panels: VisualBriefManifest["panels"] = [];
-  for (const [index, sheet] of sheetPlans.entries()) {
-    report("running", "render", `渲染 PNG 长图 ${index + 1}/${sheetPlans.length}`, sheet.title);
-    const renderStartedAt = Date.now();
-    const png = await renderSheetPng(sheet);
-    const blob = await putPublicBlob(panelBlobPath(date, index + 1, sheet.kind, revision), png, "image/png");
-    panels.push({
-      index: index + 1,
-      kind: sheet.kind,
-      title: sheet.title,
-      imageUrl: blob.url,
-      width: sheet.width,
-      height: sheet.height,
-      sourceUrls: Array.from(new Set(sheet.panels.flatMap((panel) => panel.sourceUrls)))
-    });
-    report(
-      "success",
-      "render",
-      `PNG 长图 ${index + 1}/${sheetPlans.length} 已上传`,
-      `耗时 ${((Date.now() - renderStartedAt) / 1000).toFixed(1)} 秒`
-    );
-  }
 
   report("running", "manifest", "写入文章索引和 latest 指针");
   const selectedSourceUrls = Array.from(new Set(brief.panels.flatMap((panel) => panel.sourceUrls)));
@@ -238,7 +210,7 @@ export async function generateDailyVisualBrief(input: {
     "application/json"
   );
   report("success", "manifest", "文章索引已写入 Vercel Blob");
-  report("success", "system", "长图简报生成完成");
+  report("success", "system", "公众号文章生成完成");
   return manifest;
 }
 
@@ -275,6 +247,11 @@ function deepseekRequestTimeoutMs(startedAt: number): number {
 function seedreamPhaseTimeoutMs(startedAt: number): number {
   const remaining = remainingTimeBudgetMs(startedAt) - COMPLETION_SAFETY_MS;
   return Math.max(0, Math.min(SEEDREAM_PHASE_TIMEOUT_MS, remaining));
+}
+
+function manifestSourceUrls(manifest: VisualBriefManifest): string[] {
+  const panels = manifest.article?.panels.length ? manifest.article.panels : manifest.panels;
+  return Array.from(new Set(panels.flatMap((panel) => panel.sourceUrls)));
 }
 
 function sourceProgressStage(

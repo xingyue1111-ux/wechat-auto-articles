@@ -412,8 +412,11 @@ function trimWechatArticleLength(panels: VisualBriefPanelDraft[]): VisualBriefPa
 
 function hasRequiredManifestSheetOrder(panels: Array<{ kind: VisualPanelKind }>): boolean {
   return (
-    panels.length === REQUIRED_MANIFEST_SHEET_KINDS.length &&
-    panels.every((panel, index) => panel.kind === REQUIRED_MANIFEST_SHEET_KINDS[index])
+    panels.length === 0 ||
+    (
+      panels.length === REQUIRED_MANIFEST_SHEET_KINDS.length &&
+      panels.every((panel, index) => panel.kind === REQUIRED_MANIFEST_SHEET_KINDS[index])
+    )
   );
 }
 

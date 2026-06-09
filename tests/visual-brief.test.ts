@@ -244,6 +244,30 @@ describe("visual brief generation", () => {
     expect(manifest.illustrations?.[0].imageUrl).toContain("seedream-01.png");
   });
 
+  it("allows new article manifests without rendered long-image panels", () => {
+    const manifest = validateVisualBriefManifest({
+      date: "2026-06-09",
+      title: "火山引擎 TRAE Work 企业版上线",
+      subtitle: "把公开信号变成可执行判断",
+      generatedAt: "2026-06-09T11:00:00.000Z",
+      sourceWindow: "24h",
+      article: {
+        panels: [{
+          kind: "cover",
+          kicker: "本日主线",
+          title: "火山引擎 TRAE Work 企业版上线",
+          body: ["正文"],
+          sourceUrls: ["https://example.com/source"]
+        }]
+      },
+      illustrations: [{ index: 1, imageUrl: "https://blob.example/seedream-01.png" }],
+      panels: []
+    });
+
+    expect(manifest.panels).toEqual([]);
+    expect(manifest.article?.panels[0].title).toContain("TRAE Work");
+  });
+
   it("repairs generic archived manifest titles from saved article sections", () => {
     const manifest = validateVisualBriefManifest({
       date: "2026-06-03",

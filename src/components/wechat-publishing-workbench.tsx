@@ -2,7 +2,6 @@
 
 import { useRef, useState } from "react";
 import type { VisualBriefManifest } from "@/lib/domain/types";
-import { articleLongImageHref } from "@/lib/article-routes";
 
 export function WechatPublishingWorkbench({
   manifest,
@@ -13,9 +12,7 @@ export function WechatPublishingWorkbench({
 }) {
   const previewRef = useRef<HTMLElement>(null);
   const [copyStatus, setCopyStatus] = useState<"idle" | "success" | "error">("idle");
-  const [uploadChecklist, setUploadChecklist] = useState<Record<number, boolean>>({});
   const illustrations = manifest.illustrations ?? [];
-  const uploadedCount = illustrations.filter((image) => uploadChecklist[image.index]).length;
 
   async function copyWechatArticle() {
     try {
@@ -35,28 +32,20 @@ export function WechatPublishingWorkbench({
     }
   }
 
-  function toggleUploaded(index: number) {
-    setUploadChecklist((current) => ({
-      ...current,
-      [index]: !current[index]
-    }));
-  }
-
   return (
     <main className="publishing-page">
       <header className="publishing-header">
         <div>
           <p className="eyebrow">WeChat Publishing Workbench</p>
           <h1>{manifest.title}</h1>
-          <p className="muted">复制正文后粘贴到公众号编辑器，再手动上传 4 张配图，避免公众号发布后外链图片消失。</p>
+          <p className="muted">复制正文后粘贴到公众号编辑器，4 张 Seedream 配图已内嵌在正文。</p>
         </div>
         <a className="button secondary" href="/admin">返回生成台</a>
       </header>
 
       <section className="publishing-actions">
         <button type="button" onClick={copyWechatArticle}>一键复制公众号正文</button>
-        <a className="button secondary" href={articleLongImageHref(manifest)}>查看备用长图</a>
-        {copyStatus === "success" ? <p className="form-note">已复制。请粘贴到公众号编辑器，并按正文中的占位提示手动上传 4 张配图。</p> : null}
+        {copyStatus === "success" ? <p className="form-note">已复制。请粘贴到公众号编辑器，Seedream 配图已内嵌在正文。</p> : null}
         {copyStatus === "error" ? <p className="form-error">复制失败。请手动选择下方预览内容复制。</p> : null}
       </section>
 
@@ -68,6 +57,7 @@ export function WechatPublishingWorkbench({
         />
         <aside className="publishing-assets">
           <h2>Seedream 配图</h2>
+          <p className="form-note">图片已经随正文插入。这里保留原图下载，方便你需要单独保存时使用。</p>
           {illustrations.map((image) => (
             <a
               className="button secondary compact"
@@ -78,27 +68,6 @@ export function WechatPublishingWorkbench({
               key={image.index}
             >
               下载图 {image.index}
-            </a>
-          ))}
-          <section className="publish-checklist" aria-label="发布前检查">
-            <h2>发布前检查</h2>
-            <p className="form-note">已上传配图 {uploadedCount}/4</p>
-            {illustrations.map((image) => (
-              <label className="upload-check-item" key={`upload-${image.index}`}>
-                <input
-                  type="checkbox"
-                  checked={Boolean(uploadChecklist[image.index])}
-                  onChange={() => toggleUploaded(image.index)}
-                />
-                <span>已上传配图 {image.index}</span>
-              </label>
-            ))}
-            {uploadedCount === 4 ? <p className="form-note">全部 4 张配图已确认</p> : null}
-          </section>
-          <h2>备用长图</h2>
-          {manifest.panels.map((panel) => (
-            <a className="button secondary compact" href={panel.imageUrl} target="_blank" rel="noreferrer" key={panel.index}>
-              打开长图 {panel.index}
             </a>
           ))}
         </aside>

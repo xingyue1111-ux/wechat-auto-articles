@@ -9,12 +9,11 @@ describe("admin generation form", () => {
       "utf8"
     );
 
-    expect(source).toContain('/api/admin/generate-stream');
+    expect(source).toContain("/api/admin/generate-stream");
     expect(source).toContain("response.body.getReader()");
     expect(source).toContain('className="output-console"');
     expect(source).toContain("clearLogs");
     expect(source).toContain("window.location.assign(event.redirectUrl)");
-    expect(source).toContain("任务没有返回完成状态");
     expect(source).toContain('timestamp: ""');
     expect(source).toContain('if (!timestamp) return "--:--:--"');
   });
@@ -66,7 +65,7 @@ describe("admin generation form", () => {
     expect(source).toContain("历史归档");
   });
 
-  it("renders archive copy, illustrations, final sheets and sources", async () => {
+  it("renders archive copy, illustrations and sources without final long-image sheets", async () => {
     const source = await readFile(path.join(process.cwd(), "src", "components", "archive-page.tsx"), "utf8");
 
     expect(source).toContain("archive-card-cover");
@@ -74,13 +73,14 @@ describe("admin generation form", () => {
     expect(source).toContain("articleAdminHref(article)");
     expect(source).toContain("查看发布稿");
     expect(source).toContain("Seedream 原始配图");
-    expect(source).toContain("最终公众号长图");
+    expect(source).toContain("Seedream 配图");
+    expect(source).not.toContain("最终公众号长图");
     expect(source).toContain("原始信号来源");
     expect(source).toContain("该历史版本未保存正文");
     expect(source).toContain("该历史版本未保存原始配图");
   });
 
-  it("provides a protected wechat publishing workbench", async () => {
+  it("provides a protected wechat publishing workbench with embedded images", async () => {
     const source = await readFile(
       path.join(process.cwd(), "src", "components", "wechat-publishing-workbench.tsx"),
       "utf8"
@@ -90,23 +90,22 @@ describe("admin generation form", () => {
     expect(source).toContain("navigator.clipboard.write");
     expect(source).toContain("ClipboardItem");
     expect(source).toContain('document.execCommand("copy")');
-    expect(source).toContain("articleLongImageHref(manifest)");
-    expect(source).toContain("手动上传 4 张配图");
-    expect(source).toContain("避免公众号发布后外链图片消失");
-    expect(source).toContain("下载图");
-    expect(source).toContain("备用长图");
+    expect(source).toContain("Seedream 配图已内嵌在正文");
+    expect(source).not.toContain("articleLongImageHref(manifest)");
+    expect(source).not.toContain("手动上传 4 张配图");
+    expect(source).not.toContain("备用长图");
   });
 
-  it("shows a four-image manual upload checklist in the publishing workbench", async () => {
+  it("does not show manual upload checklist or backup long-image links in the publishing workbench", async () => {
     const source = await readFile(
       path.join(process.cwd(), "src", "components", "wechat-publishing-workbench.tsx"),
       "utf8"
     );
 
-    expect(source).toContain("uploadChecklist");
-    expect(source).toContain("发布前检查");
-    expect(source).toContain("已上传配图");
-    expect(source).toContain("全部 4 张配图已确认");
+    expect(source).not.toContain("uploadChecklist");
+    expect(source).not.toContain("publish-checklist");
+    expect(source).not.toContain("manifest.panels.map");
+    expect(source).not.toContain("打开长图");
   });
 
   it("redirects completed generation to the publishing workbench", async () => {
