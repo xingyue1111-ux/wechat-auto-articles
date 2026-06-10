@@ -14,18 +14,9 @@ export function WechatPublishingWorkbench({
   const [copyStatus, setCopyStatus] = useState<"idle" | "success" | "error">("idle");
   const illustrations = manifest.illustrations ?? [];
 
-  async function copyWechatArticle() {
+  function copyWechatArticle() {
     try {
-      if (navigator.clipboard?.write && typeof ClipboardItem !== "undefined") {
-        await navigator.clipboard.write([
-          new ClipboardItem({
-            "text/html": new Blob([html], { type: "text/html" }),
-            "text/plain": new Blob([previewRef.current?.innerText ?? ""], { type: "text/plain" })
-          })
-        ]);
-      } else {
-        copyRenderedPreview(previewRef.current);
-      }
+      copyRenderedPreview(previewRef.current);
       setCopyStatus("success");
     } catch {
       setCopyStatus("error");
@@ -38,7 +29,7 @@ export function WechatPublishingWorkbench({
         <div>
           <p className="eyebrow">WeChat Publishing Workbench</p>
           <h1>{manifest.title}</h1>
-          <p className="muted">复制正文后粘贴到公众号编辑器，4 张 Seedream 配图已内嵌在正文。</p>
+          <p className="muted">复制正文后粘贴到公众号编辑器，4 张 Seedream 配图已内嵌在正文。复制时会使用浏览器原生选区，减少公众号发布后外链图片丢失。</p>
         </div>
         <a className="button secondary" href="/admin">返回生成台</a>
       </header>
@@ -56,8 +47,21 @@ export function WechatPublishingWorkbench({
           dangerouslySetInnerHTML={{ __html: html }}
         />
         <aside className="publishing-assets">
-          <h2>Seedream 配图</h2>
-          <p className="form-note">图片已经随正文插入。这里保留原图下载，方便你需要单独保存时使用。</p>
+          <h2>公众号封面图</h2>
+          <p className="form-note">横版 2.35:1，只用于公众号封面，不插入正文。</p>
+          {manifest.coverImageUrl ? (
+            <a
+              className="button secondary compact"
+              href={manifest.coverImageUrl}
+              download={`wechat-${manifest.date}-cover.png`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              下载封面图
+            </a>
+          ) : <p className="form-note">该文章没有单独封面图。</p>}
+          <h2>Seedream 正文配图</h2>
+          <p className="form-note">4 张竖版 3:4 图片已经随正文插入。这里保留原图下载，方便你需要单独保存时使用。</p>
           {illustrations.map((image) => (
             <a
               className="button secondary compact"

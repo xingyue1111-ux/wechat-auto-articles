@@ -7,11 +7,20 @@ type GeneratedSeedreamImage = {
   storagePath: string;
 };
 
+export type SeedreamImageSize = "1536x2048" | "2048x1536" | "3136x1344";
+
+export type SeedreamPromptRequest = {
+  prompt: string;
+  size?: SeedreamImageSize;
+};
+
 type SeedreamProgressStatus = "running" | "retrying" | "failed" | "success";
+
+const DEFAULT_ARTICLE_IMAGE_SIZE: SeedreamImageSize = "1536x2048";
 
 export async function generateSeedreamImages(input: {
   runId: string;
-  prompts: string[];
+  prompts: Array<string | SeedreamPromptRequest>;
   concurrency?: number;
   requestTimeoutMs?: number;
   retryDelayMs?: number;
@@ -25,11 +34,12 @@ export async function generateSeedreamImages(input: {
 }): Promise<GeneratedSeedreamImage[]> {
   const apiKey = optionalEnv("ARK_API_KEY");
   const model = optionalEnv("ARK_SEEDREAM_MODEL");
+  const requests = input.prompts.map(normalizeRequest);
   if (!apiKey || !model) {
-    return input.prompts.map((prompt, index) => placeholderImage(input.runId, prompt, index + 1));
+    return requests.map((request, index) => placeholderImage(input.runId, request, index + 1));
   }
 
-  const total = input.prompts.length;
+  const total = requests.length;
   const concurrency = Math.min(Math.max(input.concurrency ?? 3, 1), Math.max(total, 1));
   const requestTimeoutMs = input.requestTimeoutMs ?? 75_000;
   const retryDelayMs = input.retryDelayMs ?? 800;
@@ -50,7 +60,7 @@ export async function generateSeedreamImages(input: {
           apiKey,
           model,
           runId: input.runId,
-          prompt: input.prompts[index],
+          request: requests[index],
           index: index + 1,
           total,
           requestTimeoutMs,
@@ -69,7 +79,7 @@ async function generateOneImage(input: {
   apiKey: string;
   model: string;
   runId: string;
-  prompt: string;
+  request: SeedreamPromptRequest & { size: SeedreamImageSize };
   index: number;
   total: number;
   requestTimeoutMs: number;
@@ -112,8 +122,8 @@ async function generateOneImage(input: {
         },
         body: JSON.stringify({
           model: input.model,
-          prompt: input.prompt,
-          size: "3136x1344",
+          prompt: input.request.prompt,
+          size: input.request.size,
           response_format: "url"
         }),
         signal: controller.signal
@@ -130,7 +140,7 @@ async function generateOneImage(input: {
       }
       input.onProgress?.({ index: input.index, total: input.total, status: "success" });
       return {
-        prompt: input.prompt,
+        prompt: input.request.prompt,
         url,
         storagePath: storagePath(input.runId, input.index)
       };
@@ -151,13 +161,27 @@ async function generateOneImage(input: {
     status: "failed",
     detail: lastError
   });
-  return placeholderImage(input.runId, input.prompt, input.index);
+  return placeholderImage(input.runId, input.request, input.index);
 }
 
-function placeholderImage(runId: string, prompt: string, index: number): GeneratedSeedreamImage {
+function normalizeRequest(prompt: string | SeedreamPromptRequest): SeedreamPromptRequest & { size: SeedreamImageSize } {
+  if (typeof prompt === "string") {
+    return { prompt, size: DEFAULT_ARTICLE_IMAGE_SIZE };
+  }
   return {
-    prompt,
-    url: placeholderImageUrl(index),
+    prompt: prompt.prompt,
+    size: prompt.size ?? DEFAULT_ARTICLE_IMAGE_SIZE
+  };
+}
+
+function placeholderImage(
+  runId: string,
+  request: SeedreamPromptRequest & { size: SeedreamImageSize },
+  index: number
+): GeneratedSeedreamImage {
+  return {
+    prompt: request.prompt,
+    url: placeholderImageUrl(index, request.size),
     storagePath: storagePath(runId, index)
   };
 }
@@ -192,14 +216,22 @@ function isTimeoutError(error: unknown): boolean {
   return false;
 }
 
-function placeholderImageUrl(index: number): string {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1175" height="500" viewBox="0 0 1175 500">
-  <rect width="1175" height="500" fill="#f4e8cf"/>
-  <circle cx="216" cy="144" r="118" fill="#0f766e" opacity=".26"/>
-  <circle cx="920" cy="386" r="156" fill="#d89a2b" opacity=".28"/>
-  <path d="M130 330 C 310 150, 580 420, 1040 170" fill="none" stroke="#0f766e" stroke-width="24" stroke-linecap="round"/>
-  <rect x="268" y="96" width="640" height="308" rx="30" fill="#fffdf8" stroke="#17211f" stroke-width="8"/>
-  <text x="588" y="276" text-anchor="middle" font-family="Arial" font-size="54" font-weight="700" fill="#17211f">AI HOT ${index}</text>
+function placeholderImageUrl(index: number, size: SeedreamImageSize): string {
+  const [width, height] = size.split("x").map(Number);
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const cardWidth = Math.round(width * 0.58);
+  const cardHeight = Math.round(height * 0.38);
+  const cardX = Math.round((width - cardWidth) / 2);
+  const cardY = Math.round((height - cardHeight) / 2);
+  const fontSize = Math.round(Math.min(width, height) * 0.07);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  <rect width="${width}" height="${height}" fill="#f4e8cf"/>
+  <circle cx="${Math.round(width * 0.18)}" cy="${Math.round(height * 0.28)}" r="${Math.round(Math.min(width, height) * 0.18)}" fill="#0f766e" opacity=".26"/>
+  <circle cx="${Math.round(width * 0.78)}" cy="${Math.round(height * 0.74)}" r="${Math.round(Math.min(width, height) * 0.22)}" fill="#d89a2b" opacity=".28"/>
+  <path d="M${Math.round(width * 0.1)} ${Math.round(height * 0.66)} C ${Math.round(width * 0.28)} ${Math.round(height * 0.3)}, ${Math.round(width * 0.5)} ${Math.round(height * 0.84)}, ${Math.round(width * 0.88)} ${Math.round(height * 0.34)}" fill="none" stroke="#0f766e" stroke-width="${Math.round(Math.min(width, height) * 0.035)}" stroke-linecap="round"/>
+  <rect x="${cardX}" y="${cardY}" width="${cardWidth}" height="${cardHeight}" rx="${Math.round(Math.min(width, height) * 0.045)}" fill="#fffdf8" stroke="#17211f" stroke-width="${Math.round(Math.min(width, height) * 0.012)}"/>
+  <text x="${centerX}" y="${centerY}" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="${fontSize}" font-weight="700" fill="#17211f">AI HOT ${index}</text>
 </svg>`;
   return `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
 }

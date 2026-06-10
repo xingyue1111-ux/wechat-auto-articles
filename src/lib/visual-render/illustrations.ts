@@ -21,7 +21,7 @@ const ARTICLE_IMAGE_GROUPS = [
   }
 ];
 
-export function selectIllustrationPrompts(panels: IllustrationPanel[]): string[] {
+export function selectIllustrationCompositions(panels: IllustrationPanel[]): string[] {
   return ARTICLE_IMAGE_GROUPS.map((group) => {
     const groupedPanels = group.panelIndexes
       .map((index) => panels[index])
@@ -32,15 +32,21 @@ export function selectIllustrationPrompts(panels: IllustrationPanel[]): string[]
     const titles = groupedPanels.map((panel) => panel.title).filter(Boolean).join(" / ");
     const bodySignal = groupedPanels.flatMap((panel) => panel.body).join(" ").slice(0, 160);
     const visualMetaphor = groupedPanels.map((panel) => panel.imagePrompt).filter(Boolean).join("; ");
-    return buildSeedreamStylePrompt([
+    return [
       group.directive,
       `section titles: ${titles}`,
       `section meaning: ${bodySignal}`,
       `visual metaphor details: ${visualMetaphor}`
-    ].join(", "));
+    ].join(", ");
   }).filter(Boolean);
 }
 
-export function buildSeedreamStylePrompt(composition: string): string {
-  return `${composition}, flat vector illustration style with Halftone texture overlay, Ligne Claire clean line work, Art Deco decorative border elements, Beige Teal Amber color palette, aged parchment background texture, editorial yet playful atmosphere, 2.35:1 wide screen ratio, ultra detailed digital art, retro-futurism aesthetic, no readable text`;
+export function selectIllustrationPrompts(panels: IllustrationPanel[]): string[] {
+  return selectIllustrationCompositions(panels).map((composition) =>
+    buildSeedreamStylePrompt(composition, "3:4 portrait ratio")
+  );
+}
+
+export function buildSeedreamStylePrompt(composition: string, aspectRatio = "3:4 portrait ratio"): string {
+  return `${composition}, flat vector illustration style with Halftone texture overlay, Ligne Claire clean line work, Art Deco decorative border elements, Beige Teal Amber color palette, aged parchment background texture, editorial yet playful atmosphere, ${aspectRatio}, ultra detailed digital art, retro-futurism aesthetic, no readable text`;
 }

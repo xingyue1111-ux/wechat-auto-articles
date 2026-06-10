@@ -11,7 +11,7 @@ describe("Seedream image generation", () => {
     process.env.ARK_SEEDREAM_MODEL = originalModel;
   });
 
-  it("requests a Seedream wide image suitable for 2.35:1 editorial frames", async () => {
+  it("requests portrait article images by default for mobile readability", async () => {
     let requestBody: Record<string, unknown> | undefined;
     process.env.ARK_API_KEY = "test-api-key";
     process.env.ARK_SEEDREAM_MODEL = "test-model";
@@ -22,7 +22,28 @@ describe("Seedream image generation", () => {
 
     await generateSeedreamImages({ runId: "2026-05-30", prompts: ["retro futuristic AI newsroom"] });
 
-    expect(requestBody?.size).toBe("3136x1344");
+    expect(requestBody?.size).toBe("1536x2048");
+  });
+
+  it("can request an extra wide cover image separately from article images", async () => {
+    const sizes: unknown[] = [];
+    process.env.ARK_API_KEY = "test-api-key";
+    process.env.ARK_SEEDREAM_MODEL = "test-model";
+    vi.stubGlobal("fetch", async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body));
+      sizes.push(body.size);
+      return Response.json({ data: [{ url: "https://example.com/generated.png" }] });
+    });
+
+    await generateSeedreamImages({
+      runId: "2026-05-30",
+      prompts: [
+        { prompt: "cover prompt", size: "3136x1344" },
+        { prompt: "article prompt", size: "1536x2048" }
+      ]
+    });
+
+    expect(sizes).toEqual(["3136x1344", "1536x2048"]);
   });
 
   it("generates at most three images concurrently", async () => {

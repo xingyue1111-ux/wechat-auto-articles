@@ -354,8 +354,11 @@ describe("visual brief generation", () => {
     );
 
     expect(source).toContain("article: {");
-    expect(source).toContain("illustrations: persistedSeedreamImages.map");
+    expect(source).toContain("const coverImage = persistedSeedreamImages[0]");
+    expect(source).toContain("const articleImages = persistedSeedreamImages.slice(1)");
+    expect(source).toContain("illustrations: articleImages.map");
     expect(source).toContain("coverImageUrl:");
+    expect(source).toContain("buildSeedreamRequests");
     expect(source).toContain("generation:");
   });
 });

@@ -13,11 +13,19 @@ import {
 import { persistSeedreamImageForRender } from "@/lib/server/persist-seedream-image";
 import { readLatestManifest } from "@/lib/server/visual-manifest";
 import { generateWithDeepSeek } from "@/lib/services/deepseek";
-import { generateSeedreamImages } from "@/lib/services/seedream";
+import {
+  generateSeedreamImages,
+  type SeedreamImageSize,
+  type SeedreamPromptRequest
+} from "@/lib/services/seedream";
 import { putPublicBlob } from "@/lib/storage/blob";
 import { articleManifestPath, latestManifestPath } from "@/lib/storage/paths";
 import { buildFallbackVisualBrief, validateVisualBriefManifest } from "@/lib/visual-brief";
-import { selectIllustrationPrompts } from "@/lib/visual-render/illustrations";
+import {
+  buildSeedreamStylePrompt,
+  selectIllustrationCompositions,
+  selectIllustrationPrompts
+} from "@/lib/visual-render/illustrations";
 
 const FUNCTION_TIME_BUDGET_MS = 300_000;
 const COMPLETION_SAFETY_MS = 35_000;
@@ -25,6 +33,8 @@ const SEEDREAM_PHASE_TIMEOUT_MS = 150_000;
 const SEEDREAM_REQUEST_TIMEOUT_MS = 75_000;
 const SEEDREAM_MIN_REMOTE_BUDGET_MS = 45_000;
 const DEEPSEEK_REQUEST_TIMEOUT_MS = 110_000;
+const ARTICLE_IMAGE_SIZE: SeedreamImageSize = "1536x2048";
+const COVER_IMAGE_SIZE: SeedreamImageSize = "3136x1344";
 
 export async function generateDailyVisualBrief(input: {
   now?: Date;
@@ -122,9 +132,11 @@ export async function generateDailyVisualBrief(input: {
       `剩余可用预算 ${Math.max(0, seedreamBudgetMs)}ms`
     );
   }
+  const articlePrompts = selectIllustrationPrompts(brief.panels);
+  const seedreamRequests = buildSeedreamRequests(brief.panels, articlePrompts);
   const seedreamImages = await generateSeedreamImages({
     runId: revision,
-    prompts: selectIllustrationPrompts(brief.panels),
+    prompts: seedreamRequests,
     phaseTimeoutMs: skipRemoteSeedream ? 0 : seedreamBudgetMs,
     requestTimeoutMs: skipRemoteSeedream ? 1 : Math.min(SEEDREAM_REQUEST_TIMEOUT_MS, seedreamBudgetMs),
     retryDelayMs: skipRemoteSeedream ? 0 : 800,
@@ -149,6 +161,8 @@ export async function generateDailyVisualBrief(input: {
       return persisted;
     })
   );
+  const coverImage = persistedSeedreamImages[0];
+  const articleImages = persistedSeedreamImages.slice(1);
 
   const panels: VisualBriefManifest["panels"] = [];
 
@@ -161,7 +175,7 @@ export async function generateDailyVisualBrief(input: {
     subtitle: brief.subtitle,
     generatedAt: now.toISOString(),
     sourceWindow: brief.sourceWindow,
-    coverImageUrl: persistedSeedreamImages[0]?.assetUrl,
+    coverImageUrl: coverImage?.assetUrl ?? articleImages[0]?.assetUrl,
     generation: {
       contentMode: deepseek.diagnostics.contentMode,
       deepseekAttempts: deepseek.diagnostics.attempts,
@@ -187,7 +201,7 @@ export async function generateDailyVisualBrief(input: {
         sourceUrls
       }))
     },
-    illustrations: persistedSeedreamImages.map(({ assetUrl }, index) => ({
+    illustrations: articleImages.map(({ assetUrl }, index) => ({
       index: index + 1,
       imageUrl: assetUrl
     })),
@@ -247,6 +261,21 @@ function deepseekRequestTimeoutMs(startedAt: number): number {
 function seedreamPhaseTimeoutMs(startedAt: number): number {
   const remaining = remainingTimeBudgetMs(startedAt) - COMPLETION_SAFETY_MS;
   return Math.max(0, Math.min(SEEDREAM_PHASE_TIMEOUT_MS, remaining));
+}
+
+function buildSeedreamRequests(
+  panels: Parameters<typeof selectIllustrationCompositions>[0],
+  articlePrompts: string[]
+): SeedreamPromptRequest[] {
+  const compositions = selectIllustrationCompositions(panels);
+  const coverPrompt = buildSeedreamStylePrompt(
+    compositions[0] ?? articlePrompts[0] ?? "enterprise AI article cover",
+    "2.35:1 wide cover ratio"
+  );
+  return [
+    { prompt: coverPrompt, size: COVER_IMAGE_SIZE },
+    ...articlePrompts.map((prompt) => ({ prompt, size: ARTICLE_IMAGE_SIZE }))
+  ];
 }
 
 function manifestSourceUrls(manifest: VisualBriefManifest): string[] {

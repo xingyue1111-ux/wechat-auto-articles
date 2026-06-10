@@ -35,8 +35,15 @@ describe("visual brief illustration allocation", () => {
     expect(prompt).toContain("Ligne Claire clean line work");
     expect(prompt).toContain("Art Deco decorative border elements");
     expect(prompt).toContain("aged parchment background texture");
-    expect(prompt).toContain("2.35:1 wide screen ratio");
+    expect(prompt).toContain("3:4 portrait ratio");
     expect(prompt).toContain("retro-futurism aesthetic");
     expect(prompt).toContain("no readable text");
+  });
+
+  it("can apply a portrait article ratio instead of the wide cover ratio", () => {
+    const prompt = buildSeedreamStylePrompt("enterprise AI workflow control room", "3:4 portrait ratio");
+
+    expect(prompt).toContain("3:4 portrait ratio");
+    expect(prompt).not.toContain("2.35:1 wide screen ratio");
   });
 });

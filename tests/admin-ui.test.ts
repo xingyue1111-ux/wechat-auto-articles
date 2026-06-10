@@ -44,7 +44,7 @@ describe("admin generation form", () => {
     expect(source).toContain("Hugging Face Daily Papers");
     expect(source).toContain("arXiv RSS");
     expect(source).toContain("GitHub Releases");
-    expect(source).toContain('value="4 张"');
+    expect(source).toContain('value="4+1 张"');
   });
 
   it("shows saved visual briefs as a clickable history list", async () => {
@@ -87,10 +87,13 @@ describe("admin generation form", () => {
     );
 
     expect(source).toContain("一键复制公众号正文");
-    expect(source).toContain("navigator.clipboard.write");
-    expect(source).toContain("ClipboardItem");
     expect(source).toContain('document.execCommand("copy")');
     expect(source).toContain("Seedream 配图已内嵌在正文");
+    expect(source).toContain("download={`wechat-${manifest.date}-cover.png`}");
+    expect(source).toContain("manifest.coverImageUrl");
+    expect(source).toContain("copyRenderedPreview(previewRef.current)");
+    expect(source).not.toContain("navigator.clipboard.write");
+    expect(source).not.toContain("ClipboardItem");
     expect(source).not.toContain("articleLongImageHref(manifest)");
     expect(source).not.toContain("手动上传 4 张配图");
     expect(source).not.toContain("备用长图");

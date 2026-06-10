@@ -23,7 +23,7 @@ export default async function AdminPage() {
         <div>
           <p className="eyebrow">Enterprise AI Visual Brief</p>
           <h1>公众号文章生成台</h1>
-          <p className="muted">聚合五路公开信号，生成完整公众号正文和 4 张内嵌 Seedream 配图。</p>
+          <p className="muted">聚合五路公开信号，生成完整公众号正文、4 张内嵌 Seedream 正文配图和 1 张横版封面图。</p>
         </div>
         <div className="topbar-actions">
           <a className="button secondary" href="/archive">
@@ -39,7 +39,7 @@ export default async function AdminPage() {
 
       <section className="grid" aria-label="生成能力">
         <Metric icon={<Sparkles size={20} />} label="公开信号源" value="5 路" />
-        <Metric icon={<ImagePlus size={20} />} label="Seedream 配图" value="4 张" />
+        <Metric icon={<ImagePlus size={20} />} label="正文配图 + 封面" value="4+1 张" />
         <Metric icon={<CalendarDays size={20} />} label="定时任务" value="19:00" />
         <Metric icon={<Link2 size={20} />} label="保存位置" value="Blob" />
       </section>
@@ -53,7 +53,7 @@ export default async function AdminPage() {
 
       <section className="panel">
         <h2>立即生成</h2>
-        <p className="muted">生成过程会抓取新闻、调用 DeepSeek 生成完整文章、调用 Seedream 生成配图，再输出可一键复制到公众号的正文。</p>
+        <p className="muted">生成过程会抓取新闻、调用 DeepSeek 生成完整文章、调用 Seedream 生成正文配图和封面图，再输出可一键复制到公众号的正文。</p>
         <GenerateBriefForm />
       </section>
 
@@ -71,7 +71,7 @@ export default async function AdminPage() {
                 <div>
                   <strong>{article.date}</strong>
                   <span>{article.title}</span>
-                  <small>{generationModeLabel(article)} · 公众号 HTML · 4 张内嵌配图</small>
+                  <small>{generationModeLabel(article)} · 公众号 HTML · 4 张内嵌配图 · 1 张封面图</small>
                 </div>
                 <a className="button secondary compact" href={articleAdminHref(article)}>
                   <Eye size={16} />
